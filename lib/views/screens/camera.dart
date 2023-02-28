@@ -1,12 +1,12 @@
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
-import 'dart:io';
-
 import 'package:path_provider/path_provider.dart';
+import 'package:sp_app/views/screens/cropper.dart';
 
 import '../../main.dart';
-import 'full_screen_image.dart';
+import '../utils/AppColor.dart';
 
 class CameraScreen extends StatefulWidget {
   @override
@@ -16,6 +16,7 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   CameraController? controller;
   bool _isCameraInitialized = false;
+  bool _isCapturePressed = false;
 
   @override
   void initState() {
@@ -101,7 +102,7 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _isCameraInitialized
-          ? Stack(children: [
+          ? Stack(alignment: Alignment.center, children: [
               AspectRatio(
                   aspectRatio: 1 / controller!.value.aspectRatio,
                   child: Transform.scale(
@@ -120,10 +121,24 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                   )),
               Positioned(
+                  top: MediaQuery.of(context).size.height / 2,
+                  child: Text(
+                      'Capture as close to the receipt as possible.\nMake sure the item list with prices can be seen.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: AppColor.secondary.withOpacity(0.8),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w200,
+                          fontFamily: 'inter'))),
+              Positioned(
                   bottom: 100,
                   left: MediaQuery.of(context).size.width / 2 - 50,
                   child: InkWell(
                     onTap: () async {
+                      if (_isCapturePressed == true) return;
+
+                      _isCapturePressed = true;
+
                       XFile? rawImage = await takePicture();
                       File imageFile = File(rawImage!.path);
 
@@ -138,16 +153,22 @@ class _CameraScreenState extends State<CameraScreen> {
 
                       print('${directory.path}/$currentUnix.$fileFormat');
 
+                      _isCapturePressed = false;
+
                       await Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => FullScreenImage(
-                              image:
-                                  Image.file(imageFile, fit: BoxFit.cover))));
+                          builder: (context) =>
+                              CropperScreen(imageFile: imageFile)));
                     },
                     child: Stack(
                       alignment: Alignment.center,
-                      children: const [
-                        Icon(Icons.circle, color: Colors.white38, size: 100),
-                        Icon(Icons.circle, color: Colors.white, size: 80),
+                      children: [
+                        const Icon(Icons.circle,
+                            color: Colors.white38, size: 100),
+                        Icon(Icons.circle,
+                            color: _isCapturePressed
+                                ? Colors.white38
+                                : Colors.white,
+                            size: 80),
                       ],
                     ),
                   ))
