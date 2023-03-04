@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -307,6 +309,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                 abbreviation: _abbreviationController.text,
                                 price: double.parse(_priceController.text),
                                 receipt_id: receipt_id));
+                            recalculateTotal();
                             refreshDB();
                             Navigator.of(context).pop();
                           },
@@ -398,6 +401,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                     child: TextButton(
                       onPressed: () {
                         db.deleteItem(data.id);
+                        recalculateTotal();
                         refreshDB();
                         Navigator.of(context).pop();
                       },
@@ -489,15 +493,17 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
             onTap: () {
               Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => FullScreenImage(
-                      image:
-                          Image.asset(widget.data.photo, fit: BoxFit.cover))));
+                      image: Image(
+                          image: FileImage(File(widget.data.photo)),
+                          fit: BoxFit.cover))));
             },
             child: Container(
               height: 180,
               width: MediaQuery.of(context).size.width,
               decoration: BoxDecoration(
                   image: DecorationImage(
-                      image: AssetImage(widget.data.photo), fit: BoxFit.cover)),
+                      image: FileImage(File(widget.data.photo)),
+                      fit: BoxFit.cover)),
               child: Container(
                 decoration: BoxDecoration(gradient: AppColor.linearBlackTop),
                 height: 280,

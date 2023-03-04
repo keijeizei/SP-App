@@ -156,8 +156,10 @@ class _CameraScreenState extends State<CameraScreen> {
                       _isCapturePressed = false;
 
                       await Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) =>
-                              CropperScreen(imageFile: imageFile)));
+                          builder: (context) => CropperScreen(
+                              imageFile: imageFile,
+                              imagePath:
+                                  '${directory.path}/$currentUnix.$fileFormat')));
                     },
                     child: Stack(
                       alignment: Alignment.center,

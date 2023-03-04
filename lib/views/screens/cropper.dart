@@ -9,13 +9,18 @@ import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_crop/image_crop.dart';
+import 'package:sp_app/models/core/receipt.dart';
+import 'package:sp_app/models/helper/db_helper.dart';
 import 'package:sp_app/views/screens/full_screen_image.dart';
+import 'package:sp_app/views/screens/receipt_detail_page.dart';
 
 import '../utils/AppColor.dart';
 
 class CropperScreen extends StatefulWidget {
   final File imageFile;
-  const CropperScreen({super.key, required this.imageFile});
+  final String imagePath;
+  const CropperScreen(
+      {super.key, required this.imageFile, required this.imagePath});
 
   @override
   State<CropperScreen> createState() => _CropperScreenState();
@@ -23,6 +28,8 @@ class CropperScreen extends StatefulWidget {
 
 class _CropperScreenState extends State<CropperScreen> {
   final cropKey = GlobalKey<CropState>();
+
+  DBHelper db = DBHelper();
 
   Future<void> cropImage(context) async {
     // final scale = cropKey.currentState.scale;
@@ -48,8 +55,17 @@ class _CropperScreenState extends State<CropperScreen> {
 
     processImage(InputImage.fromFile(file));
 
+    Receipt receiptData = Receipt(
+        id: -1,
+        title: 'New Receipt',
+        photo: widget.imagePath,
+        date: DateTime.now().millisecondsSinceEpoch,
+        price: 0);
+
+    await db.insertReceipt(receiptData);
+
     await Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => FullScreenImage(image: Image.file(file))));
+        builder: (context) => ReceiptDetailPage(data: receiptData)));
   }
 
   String? _text;

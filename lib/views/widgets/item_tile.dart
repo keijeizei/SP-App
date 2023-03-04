@@ -40,11 +40,11 @@ class ItemTile extends StatelessWidget {
             flex: 3,
             child: Text(
               '₱${data.price}',
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'inter',
-                  color: Colors.grey[600]),
+                  color: Colors.black),
             ),
           ),
         ],

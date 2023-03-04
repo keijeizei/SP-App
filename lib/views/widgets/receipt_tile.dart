@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sp_app/models/core/receipt.dart';
@@ -36,7 +38,7 @@ class ReceiptTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(5),
                 color: Colors.blueGrey,
                 image: DecorationImage(
-                    image: AssetImage(data.photo), fit: BoxFit.cover),
+                    image: FileImage(File(data.photo)), fit: BoxFit.cover),
               ),
             ),
             // Receipt Info
