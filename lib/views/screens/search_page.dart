@@ -17,6 +17,8 @@ class _SearchPageState extends State<SearchPage> {
   TextEditingController searchInputController = TextEditingController();
   late Future<List<Receipt>> searchResult;
 
+  int sortMode = 0; // newest, oldest, cheapest, msot expensive
+
   DBHelper db = DBHelper();
 
   @override
@@ -24,6 +26,26 @@ class _SearchPageState extends State<SearchPage> {
     super.initState();
 
     searchResult = db.getReceipts();
+  }
+
+  void updateSortMode(int mode) async {
+    List<Receipt> presentSearchResult = await searchResult;
+    if (mode == 0) {
+      presentSearchResult.sort((a, b) => a.date.compareTo(b.date));
+    }
+    if (mode == 1) {
+      presentSearchResult = List.from(presentSearchResult.reversed);
+    }
+    if (mode == 2) {
+      presentSearchResult.sort((a, b) => a.price.compareTo(b.price));
+    }
+    if (mode == 3) {
+      presentSearchResult = List.from(presentSearchResult.reversed);
+    }
+    setState(() {
+      searchResult = Future.value(presentSearchResult);
+      sortMode = mode;
+    });
   }
 
   @override
@@ -84,6 +106,7 @@ class _SearchPageState extends State<SearchPage> {
                               print(value);
                               setState(() {
                                 searchResult = db.searchReceipts(value);
+                                updateSortMode(sortMode);
                               });
                             },
                             style: const TextStyle(
@@ -131,7 +154,9 @@ class _SearchPageState extends State<SearchPage> {
                                       topLeft: Radius.circular(20),
                                       topRight: Radius.circular(20))),
                               builder: (context) {
-                                return SearchFilterModal();
+                                return SearchFilterModal(
+                                    sortMode: sortMode,
+                                    updateSortMode: updateSortMode);
                               });
                         },
                         child: Container(
