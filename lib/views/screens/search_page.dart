@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sp_app/models/core/receipt.dart';
+import 'package:sp_app/models/helper/db_helper.dart';
 import 'package:sp_app/models/helper/receipt_helper.dart';
 import 'package:sp_app/views/utils/AppColor.dart';
 import 'package:sp_app/views/widgets/modals/search_filter_modal.dart';
@@ -13,14 +15,22 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   TextEditingController searchInputController = TextEditingController();
-  final List<Receipt> searchResult = ReceiptHelper.sarchResultReceipt;
+  late Future<List<Receipt>> searchResult;
+
+  DBHelper db = DBHelper();
+
+  @override
+  void initState() {
+    super.initState();
+
+    searchResult = db.getReceipts();
+  }
 
   @override
   Widget build(BuildContext context) {
     print(searchInputController.text.isEmpty);
     return Scaffold(
       appBar: AppBar(
-        brightness: Brightness.dark,
         backgroundColor: AppColor.primary,
         elevation: 0,
         centerTitle: true,
@@ -35,6 +45,7 @@ class _SearchPageState extends State<SearchPage> {
             Navigator.of(context).pop();
           },
         ),
+        systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
       body: ListView(
         shrinkWrap: true,
@@ -67,8 +78,13 @@ class _SearchPageState extends State<SearchPage> {
                           child: TextField(
                             controller: searchInputController,
                             onChanged: (value) {
-                              print(searchInputController.text);
                               setState(() {});
+                            },
+                            onSubmitted: (value) {
+                              print(value);
+                              setState(() {
+                                searchResult = db.searchReceipts(value);
+                              });
                             },
                             style: const TextStyle(
                                 color: Colors.white,
@@ -77,7 +93,7 @@ class _SearchPageState extends State<SearchPage> {
                             maxLines: 1,
                             textInputAction: TextInputAction.search,
                             decoration: InputDecoration(
-                              hintText: 'What do you want to eat?',
+                              hintText: 'Search',
                               hintStyle: TextStyle(
                                   color: Colors.white.withOpacity(0.2)),
                               prefixIconConstraints:
@@ -87,9 +103,7 @@ class _SearchPageState extends State<SearchPage> {
                               focusedBorder: InputBorder.none,
                               border: InputBorder.none,
                               prefixIcon: Visibility(
-                                visible: (searchInputController.text.isEmpty)
-                                    ? true
-                                    : false,
+                                visible: true,
                                 child: Container(
                                   margin: const EdgeInsets.only(
                                       left: 10, right: 12),
@@ -170,37 +184,45 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
           // Section 2 - Search Result
-          Container(
-            padding: const EdgeInsets.all(16),
-            width: MediaQuery.of(context).size.width,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(bottom: 15),
-                  child: const Text(
-                    'This is the result of your search..',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ),
-                ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: searchResult.length,
-                  physics: const NeverScrollableScrollPhysics(),
-                  separatorBuilder: (context, index) {
-                    return const SizedBox(height: 16);
-                  },
-                  itemBuilder: (context, index) {
-                    return ReceiptTile(
-                      data: searchResult[index],
-                      refreshDB: () {},
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
+          FutureBuilder(
+              future: searchResult,
+              builder: (context, AsyncSnapshot snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                } else {
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    width: MediaQuery.of(context).size.width,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 15),
+                          child: const Text(
+                            'This is the result of your search..',
+                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                        ),
+                        ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: snapshot.data.length,
+                          physics: const NeverScrollableScrollPhysics(),
+                          separatorBuilder: (context, index) {
+                            return const SizedBox(height: 16);
+                          },
+                          itemBuilder: (context, index) {
+                            return ReceiptTile(
+                              data: snapshot.data[index],
+                              refreshDB: () {},
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              }),
         ],
       ),
     );

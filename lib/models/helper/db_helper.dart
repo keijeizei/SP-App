@@ -81,6 +81,29 @@ class DBHelper {
     });
   }
 
+  // A method that retrieves all the tasks from the tasks table.
+  Future<List<Receipt>> searchReceipts(String keyword) async {
+    // Get a reference to the database.
+    final db = await initializeDB();
+
+    // Query the table for all The Tasks.
+    final List<Map<String, dynamic>> maps = await db.query(
+      'receipts',
+      where: 'title LIKE ?',
+      whereArgs: ['%$keyword%'],
+    );
+
+    // Convert the List<Map<String, dynamic> into a List<Task>.
+    return List.generate(maps.length, (i) {
+      return Receipt(
+          id: maps[i]['id'],
+          title: maps[i]['title'],
+          photo: maps[i]['photo'],
+          date: maps[i]['date'],
+          price: maps[i]['price']);
+    });
+  }
+
   // A method that retrieves all the items belonging to a receipt id
   Future<List<Item>> getItems(int id) async {
     final db = await initializeDB();

@@ -91,7 +91,22 @@ class SearchFilterModal extends StatelessWidget {
             textColor: Colors.grey,
             child: ListTile(
               selected: false,
-              title: Text('Popular',
+              title: Text('Cheapest',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            ),
+          ),
+        ),
+        // Sort By Option
+        Container(
+          decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey))),
+          child: ListTileTheme(
+            selectedColor: AppColor.primary,
+            textColor: Colors.grey,
+            child: ListTile(
+              selected: false,
+              title: Text('Most expensive',
                   style: TextStyle(fontWeight: FontWeight.w600)),
               contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             ),
