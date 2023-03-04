@@ -62,7 +62,9 @@ class _CropperScreenState extends State<CropperScreen> {
         date: DateTime.now().millisecondsSinceEpoch,
         price: 0);
 
-    await db.insertReceipt(receiptData);
+    int trueId = await db.insertReceipt(receiptData);
+    print(trueId);
+    receiptData.id = trueId;
 
     await Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => ReceiptDetailPage(data: receiptData)));

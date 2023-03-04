@@ -31,7 +31,7 @@ class DBHelper {
   }
 
   // Define a function that inserts tasks into the database
-  Future<void> insertReceipt(Receipt receipt) async {
+  Future<int> insertReceipt(Receipt receipt) async {
     // Get a reference to the database.
     final db = await initializeDB();
 
@@ -39,7 +39,7 @@ class DBHelper {
     // `conflictAlgorithm` to use in case the same task is inserted twice.
     //
     // In this case, replace any previous data.
-    await db.insert(
+    return await db.insert(
       'receipts',
       receipt.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,

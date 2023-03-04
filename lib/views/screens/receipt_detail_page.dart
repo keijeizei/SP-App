@@ -144,6 +144,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
+                        print(widget.data.id.toString());
+                        print(_titleController.text);
                         db.updateReceipt(Receipt(
                             id: widget.data.id,
                             title: _titleController.text,
@@ -198,8 +200,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                     child: ElevatedButton(
                       onPressed: () {
                         db.deleteReceipt(widget.data.id);
-                        int count = 0;
-                        Navigator.of(context).popUntil((_) => count++ >= 2);
+                        Navigator.popUntil(context,
+                            (Route<dynamic> predicate) => predicate.isFirst);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
@@ -458,7 +460,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.popUntil(
+                    context, (Route<dynamic> predicate) => predicate.isFirst);
               },
             ),
             actions: [
