@@ -3,22 +3,22 @@ import 'package:sp_app/models/core/receipt.dart';
 class ReceiptHelper {
   static List<Receipt> sarchResultReceipt = recipeSearchResultRawData
       .map((data) => Receipt(
-          title: data['title'].toString(),
-          photo: data['photo'].toString(),
-          date: int.parse(data['date'].toString()),
-          price: double.parse(data['price'].toString()),
-          items: List<Item>.from(
-              (data["items"] as List).map((x) => Item.fromJson(x)))))
+            id: int.parse(data['id'].toString()),
+            title: data['title'].toString(),
+            photo: data['photo'].toString(),
+            date: int.parse(data['date'].toString()),
+            price: double.parse(data['price'].toString()),
+          ))
       .toList();
 
   static List<Receipt> bookmarkedReceipt = bookmarkedReceiptRawData
       .map((data) => Receipt(
-          title: data['title'].toString(),
-          photo: data['photo'].toString(),
-          date: int.parse(data['date'].toString()),
-          price: double.parse(data['price'].toString()),
-          items: List<Item>.from(
-              (data["items"] as List).map((x) => Item.fromJson(x)))))
+            id: int.parse((data['id'] ?? -1).toString()),
+            title: data['title'].toString(),
+            photo: data['photo'].toString(),
+            date: int.parse(data['date'].toString()),
+            price: double.parse(data['price'].toString()),
+          ))
       .toList();
 }
 

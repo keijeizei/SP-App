@@ -18,6 +18,7 @@ class ItemTile extends StatelessWidget {
           Flexible(
               flex: 9,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     data.name,
@@ -27,7 +28,7 @@ class ItemTile extends StatelessWidget {
                         height: 150 / 100),
                   ),
                   Text(
-                    data.name,
+                    data.abbreviation,
                     style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w200,

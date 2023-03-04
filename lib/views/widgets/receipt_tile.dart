@@ -7,14 +7,17 @@ import 'package:sp_app/views/utils/datetime_converter.dart';
 
 class ReceiptTile extends StatelessWidget {
   final Receipt data;
-  ReceiptTile({required this.data});
+  final Function() refreshDB;
+  ReceiptTile({required this.data, required this.refreshDB});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => ReceiptDetailPage(data: data)));
+        Navigator.of(context)
+            .push(MaterialPageRoute(
+                builder: (context) => ReceiptDetailPage(data: data)))
+            .then((_) => refreshDB());
       },
       child: Container(
         height: 90,
@@ -79,6 +82,13 @@ class ReceiptTile extends StatelessWidget {
                           margin: const EdgeInsets.only(left: 5),
                           child: Text(
                             data.price.toString(),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(left: 5),
+                          child: Text(
+                            data.id.toString(),
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),

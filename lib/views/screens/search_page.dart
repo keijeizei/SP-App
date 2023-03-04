@@ -194,6 +194,7 @@ class _SearchPageState extends State<SearchPage> {
                   itemBuilder: (context, index) {
                     return ReceiptTile(
                       data: searchResult[index],
+                      refreshDB: () {},
                     );
                   },
                 ),

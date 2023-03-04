@@ -6,6 +6,7 @@ import 'package:sp_app/models/core/receipt.dart';
 import 'package:sp_app/views/screens/full_screen_image.dart';
 import 'package:sp_app/views/utils/AppColor.dart';
 import 'package:sp_app/views/widgets/item_tile.dart';
+import '../../models/helper/db_helper.dart';
 import '../utils/datetime_converter.dart';
 
 class ReceiptDetailPage extends StatefulWidget {
@@ -20,9 +21,19 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     with TickerProviderStateMixin {
   late ScrollController _scrollController;
 
+  late final TextEditingController _titleController =
+      TextEditingController(text: widget.data.title);
   late final TextEditingController _itemNameController =
       TextEditingController();
+  late final TextEditingController _abbreviationController =
+      TextEditingController(); // for adding new items only
   late final TextEditingController _priceController = TextEditingController();
+
+  late Future<List<Item>> itemList;
+
+  late double _totalPrice;
+
+  DBHelper db = DBHelper();
 
   @override
   void initState() {
@@ -30,6 +41,39 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     _scrollController = ScrollController(initialScrollOffset: 0.0);
     _scrollController.addListener(() {
       changeAppBarColor(_scrollController);
+    });
+
+    _totalPrice = widget.data.price;
+
+    // db.insertItem(Item(
+    //     id: -1,
+    //     name: 'Itlog69',
+    //     abbreviation: 'ITLG69',
+    //     price: 124.36,
+    //     receipt_id: 1));
+
+    refreshDB();
+  }
+
+  void refreshDB() async {
+    setState(() {
+      itemList = db.getItems(widget.data.id);
+    });
+  }
+
+  Future<void> recalculateTotal() async {
+    List<Item> presentItemList = await db.getItems(widget.data.id);
+    double totalPrice = presentItemList.fold(0, (p, c) => p + c.price);
+
+    db.updateReceipt(Receipt(
+        id: widget.data.id,
+        title: widget.data.title,
+        photo: widget.data.photo,
+        date: widget.data.date,
+        price: totalPrice));
+
+    setState(() {
+      _totalPrice = totalPrice;
     });
   }
 
@@ -54,28 +98,27 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     }
   }
 
-  // fab to write review
-  showFAB(TabController tabController) {
-    int reviewTabIndex = 2;
-    if (tabController.index == reviewTabIndex) {
-      return true;
-    }
-    return false;
+  showSnackbar(context, String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(text),
+    ));
   }
 
-  showSaveDialog(context) {
+  // Rename the receipt
+  showRenameDialog(context) {
     return showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('Save receipt'),
+            title: const Text('Rename receipt'),
             content: Container(
                 width: MediaQuery.of(context).size.width,
                 height: 64,
                 color: Colors.white,
-                child: Column(children: const [
+                child: Column(children: [
                   TextField(
-                    decoration: InputDecoration(
+                    controller: _titleController,
+                    decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       labelText: 'Receipt name',
                     ),
@@ -98,11 +141,19 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                   ),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        db.updateReceipt(Receipt(
+                            id: widget.data.id,
+                            title: _titleController.text,
+                            photo: widget.data.photo,
+                            date: widget.data.date,
+                            price: widget.data.price));
+                        Navigator.of(context).pop();
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
                       ),
-                      child: const Text('Save'),
+                      child: const Text('Rename'),
                     ),
                   ),
                 ],
@@ -112,48 +163,19 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
         });
   }
 
-  showEditDialog(context, data) {
-    if (data != null) {
-      _itemNameController.text = data.name;
-      _priceController.text = data.price;
-    }
+  // Delete the receipt
+  showDeleteDialog(context) {
     return showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
+            title: const Text('Delete receipt'),
             content: Container(
                 width: MediaQuery.of(context).size.width,
-                height: 160,
+                height: 64,
                 color: Colors.white,
-                child: Column(children: [
-                  TextField(
-                    controller: _itemNameController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Item name',
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  RichText(
-                    text: TextSpan(
-                        text: 'Search this item on Google Images',
-                        style: const TextStyle(
-                          color: Colors.blue,
-                        ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            print(
-                                'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=your_search_query');
-                          }),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _priceController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Price',
-                    ),
-                  ),
+                child: Column(children: const [
+                  Text('Are you sure you want to delete this receipt?'),
                 ])),
             actions: [
               Row(
@@ -172,7 +194,232 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                   ),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        db.deleteReceipt(widget.data.id);
+                        int count = 0;
+                        Navigator.of(context).popUntil((_) => count++ >= 2);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.primary,
+                      ),
+                      child: const Text('Delete'),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          );
+        });
+  }
+
+  // Add an item
+  showAddDialog(context, receipt_id) {
+    _itemNameController.text = '';
+    _priceController.text = '';
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return Scaffold(
+              backgroundColor: Colors.transparent,
+              body: AlertDialog(
+                content: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Container(
+                        width: MediaQuery.of(context).size.width,
+                        height: 280,
+                        color: Colors.white,
+                        child: Column(children: [
+                          TextField(
+                            controller: _abbreviationController,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Receipt abbreviated name (optional)',
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          RichText(
+                            text: TextSpan(
+                                text: 'Auto-fill full item name',
+                                style: const TextStyle(color: Colors.blue),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    if (_abbreviationController
+                                        .text.isNotEmpty) {
+                                      print(
+                                          'http:// this is the api call ${_abbreviationController.text}');
+                                    } else {
+                                      showSnackbar(context,
+                                          'Enter the abbreviated name from your receipt to auto-fill.');
+                                    }
+                                  }),
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _itemNameController,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Item name',
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          RichText(
+                            text: TextSpan(
+                                text: 'Search this item on Google Images',
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    print(
+                                        'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
+                                  }),
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _priceController,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Price',
+                            ),
+                          ),
+                        ]))),
+                actions: [
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 160,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.grey[600],
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            db.insertItem(Item(
+                                id: -1,
+                                name: _itemNameController.text,
+                                abbreviation: _abbreviationController.text,
+                                price: double.parse(_priceController.text),
+                                receipt_id: receipt_id));
+                            refreshDB();
+                            Navigator.of(context).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColor.primary,
+                          ),
+                          child: const Text('Add'),
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ));
+        });
+  }
+
+  showEditDialog(context, data) {
+    if (data != null) {
+      _itemNameController.text = data.name;
+      _priceController.text = data.price.toString();
+    }
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: 250,
+                    color: Colors.white,
+                    child: Column(children: [
+                      TextField(
+                        controller:
+                            TextEditingController(text: data.abbreviation),
+                        enabled: false,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Detected receipt name',
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: _itemNameController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Item name',
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      RichText(
+                        text: TextSpan(
+                            text: 'Search this item on Google Images',
+                            style: const TextStyle(
+                              color: Colors.blue,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                print(
+                                    'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
+                              }),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _priceController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Price',
+                        ),
+                      ),
+                    ]))),
+            actions: [
+              Row(
+                children: [
+                  SizedBox(
+                    width: 80,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey[600],
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 120,
+                    child: TextButton(
+                      onPressed: () {
+                        db.deleteItem(data.id);
+                        refreshDB();
+                        Navigator.of(context).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red[600],
+                      ),
+                      child: const Text('Delete'),
+                    ),
+                  ),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await db.updateItem(Item(
+                            id: data.id,
+                            name: _itemNameController.text,
+                            abbreviation: data.abbreviation,
+                            price: double.parse(_priceController.text),
+                            receipt_id: data.receipt_id));
+                        recalculateTotal();
+                        refreshDB();
+                        Navigator.of(context).pop();
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
                       ),
@@ -213,13 +460,22 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
             actions: [
               IconButton(
                   onPressed: () {
-                    showSaveDialog(context);
+                    showDeleteDialog(context);
                   },
-                  icon:
-                      const Icon(Icons.save_alt_rounded, color: Colors.white)),
+                  icon: const Icon(Icons.delete, color: Colors.white)),
             ],
             systemOverlayStyle: SystemUiOverlayStyle.light,
           ),
+        ),
+      ),
+      floatingActionButton: Visibility(
+        visible: true,
+        child: FloatingActionButton(
+          onPressed: () {
+            showAddDialog(context, widget.data.id);
+          },
+          backgroundColor: AppColor.primary,
+          child: const Icon(Icons.add),
         ),
       ),
       body: ListView(
@@ -283,7 +539,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                     Container(
                       margin: const EdgeInsets.only(left: 5),
                       child: Text(
-                        widget.data.price.toString(),
+                        _totalPrice.toString(),
                         style:
                             const TextStyle(color: Colors.white, fontSize: 12),
                       ),
@@ -293,14 +549,22 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                 // Receipt Title
                 Container(
                   margin: const EdgeInsets.only(bottom: 12, top: 16),
-                  child: Text(
-                    widget.data.title,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'inter'),
-                  ),
+                  child: Row(children: [
+                    Text(
+                      _titleController.text,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'inter'),
+                    ),
+                    IconButton(
+                        onPressed: () {
+                          showRenameDialog(context);
+                        },
+                        icon: const Icon(Icons.edit,
+                            color: Colors.white, size: 16)),
+                  ]),
                 ),
                 // Receipt Description
                 Text(
@@ -344,22 +608,32 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
           //   ),
           // ),
           // IndexedStack based on TabBar index
-          ListView.builder(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            itemCount: widget.data.items.length,
-            physics: const NeverScrollableScrollPhysics(),
-            itemBuilder: (context, index) {
-              var data = widget.data.items[index];
-              return GestureDetector(
-                  onTap: () {
-                    showEditDialog(context, data);
-                  },
-                  child: ItemTile(
-                    data: data,
-                  ));
-            },
-          ),
+          // TODO: fix data.items by querying the items from db, .items has been removed from Receipt model
+          FutureBuilder(
+              future: itemList,
+              builder: (context, AsyncSnapshot snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                } else {
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: snapshot.data.length,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      var data = snapshot.data[index];
+                      return GestureDetector(
+                          onTap: () {
+                            showEditDialog(context, data);
+                          },
+                          child: ItemTile(
+                            data: data,
+                          ));
+                    },
+                  );
+                }
+              })
+
           // IndexedStack(
           //   index: _tabController.index,
           //   children: [
