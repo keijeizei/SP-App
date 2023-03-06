@@ -25,7 +25,7 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
 
-    searchResult = Future.value([]);
+    searchResult = db.getReceipts();
   }
 
   void updateSortMode(int mode) async {

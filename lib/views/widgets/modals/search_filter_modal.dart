@@ -78,7 +78,7 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                 textColor: Colors.grey,
                 child: ListTile(
                   selected: widget.sortMode == 0,
-                  title: const Text('Newest',
+                  title: const Text('Newest first',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   contentPadding:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -99,7 +99,7 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                 textColor: Colors.grey,
                 child: ListTile(
                   selected: widget.sortMode == 1,
-                  title: const Text('Oldest',
+                  title: const Text('Oldest first',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   contentPadding:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -120,7 +120,7 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                 textColor: Colors.grey,
                 child: ListTile(
                   selected: widget.sortMode == 2,
-                  title: const Text('Cheapest',
+                  title: const Text('Cheapest first',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   contentPadding:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -141,7 +141,7 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                   textColor: Colors.grey,
                   child: ListTile(
                     selected: widget.sortMode == 3,
-                    title: const Text('Most expensive',
+                    title: const Text('Most expensive first',
                         style: TextStyle(fontWeight: FontWeight.w600)),
                     contentPadding:
                         const EdgeInsets.symmetric(vertical: 8, horizontal: 16),

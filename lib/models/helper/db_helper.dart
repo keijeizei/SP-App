@@ -68,7 +68,8 @@ class DBHelper {
     final db = await initializeDB();
 
     // Query the table for all The Tasks.
-    final List<Map<String, dynamic>> maps = await db.query('receipts');
+    final List<Map<String, dynamic>> maps =
+        await db.query('receipts', orderBy: 'date DESC');
 
     // Convert the List<Map<String, dynamic> into a List<Task>.
     return List.generate(maps.length, (i) {
