@@ -19,28 +19,60 @@ class ItemTile extends StatelessWidget {
               flex: 9,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    data.name,
-                    overflow: TextOverflow.fade,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        height: 150 / 100),
-                  ),
-                  Text(
-                    data.abbreviation,
-                    overflow: TextOverflow.fade,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w200,
-                        height: 150 / 100),
-                  ),
-                ],
+                // don't show name or abbreviation if they are empty
+                children: data.name.isEmpty
+                    ? [
+                        Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Text(
+                              data.abbreviation,
+                              overflow: TextOverflow.fade,
+                              maxLines: 1,
+                              softWrap: false,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  height: 150 / 100),
+                            )),
+                      ]
+                    : data.abbreviation.isEmpty
+                        ? [
+                            Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                child: Text(
+                                  data.name,
+                                  overflow: TextOverflow.fade,
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      height: 150 / 100),
+                                ))
+                          ]
+                        : [
+                            Text(
+                              data.name,
+                              overflow: TextOverflow.fade,
+                              maxLines: 1,
+                              softWrap: false,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  height: 150 / 100),
+                            ),
+                            Text(
+                              data.abbreviation,
+                              overflow: TextOverflow.fade,
+                              maxLines: 1,
+                              softWrap: false,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w200,
+                                  height: 150 / 100),
+                            ),
+                          ],
               )),
           Flexible(
             flex: 3,

@@ -84,6 +84,14 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     });
   }
 
+  String? _validateNames(String? value) {
+    if (_itemNameController.text.isEmpty &&
+        _abbreviationController.text.isEmpty) {
+      return 'Enter full name or abbreviated name';
+    }
+    return null;
+  }
+
   Color appBarColor = Colors.transparent;
 
   changeAppBarColor(ScrollController scrollController) {
@@ -254,10 +262,11 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                 children: [
                                   TextFormField(
                                     controller: _abbreviationController,
+                                    validator: _validateNames,
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(),
                                       labelText:
-                                          'Receipt abbreviated name (optional)',
+                                          'Abbreviated receipt name (optional)',
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -281,10 +290,10 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                   const SizedBox(height: 16),
                                   TextFormField(
                                     controller: _itemNameController,
-                                    validator: validateText,
+                                    validator: _validateNames,
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(),
-                                      labelText: 'Item name',
+                                      labelText: 'Item full name',
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -362,6 +371,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
   showEditDialog(context, data) {
     if (data != null) {
+      _abbreviationController.text = data.abbreviation;
       _itemNameController.text = data.name;
       _priceController.text = data.price.toStringAsFixed(2);
     }
@@ -380,21 +390,38 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                         child:
                             Column(mainAxisSize: MainAxisSize.min, children: [
                           TextFormField(
-                            controller:
-                                TextEditingController(text: data.abbreviation),
-                            enabled: false,
+                            controller: _abbreviationController,
+                            validator: _validateNames,
+                            // enabled: true,
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
-                              labelText: 'Detected receipt name',
+                              labelText: 'Abbreviated receipt name',
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 4),
+                          RichText(
+                            text: TextSpan(
+                                text: 'Auto-fill full item name',
+                                style: const TextStyle(color: Colors.blue),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    if (_abbreviationController
+                                        .text.isNotEmpty) {
+                                      print(
+                                          'http:// this is the api call ${_abbreviationController.text}');
+                                    } else {
+                                      showSnackbar(context,
+                                          'To use auto-fill, you must enter the abbreviated name from your receipt');
+                                    }
+                                  }),
+                          ),
+                          const SizedBox(height: 16),
                           TextFormField(
                             controller: _itemNameController,
-                            validator: validateText,
+                            validator: _validateNames,
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
-                              labelText: 'Item name',
+                              labelText: 'Item full name',
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -462,7 +489,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                           await db.updateItem(Item(
                               id: data.id,
                               name: _itemNameController.text,
-                              abbreviation: data.abbreviation,
+                              abbreviation: _abbreviationController.text,
                               price: double.parse(_priceController.text),
                               receipt_id: data.receipt_id));
                           recalculateTotal();

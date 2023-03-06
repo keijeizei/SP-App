@@ -84,7 +84,7 @@ class _CropperScreenState extends State<CropperScreen> {
     for (var i = 0; i < itemList.length; i++) {
       await db.insertItem(Item(
           id: -1,
-          name: itemList[i],
+          name: '',
           abbreviation: itemList[i],
           price: i < priceList.length ? priceList[i] : 0.0,
           receipt_id: trueId));
