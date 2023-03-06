@@ -694,7 +694,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                 } else {
                   return ListView.builder(
                     shrinkWrap: true,
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.only(bottom: 90),
                     itemCount: snapshot.data.length,
                     physics: const NeverScrollableScrollPhysics(),
                     itemBuilder: (context, index) {
