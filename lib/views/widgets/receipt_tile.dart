@@ -90,13 +90,6 @@ class ReceiptTile extends StatelessWidget {
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),
-                        Container(
-                          margin: const EdgeInsets.only(left: 5),
-                          child: Text(
-                            data.id.toString(),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
                       ],
                     ),
                   ],

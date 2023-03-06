@@ -285,7 +285,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                     ),
                                     recognizer: TapGestureRecognizer()
                                       ..onTap = () {
-                                        print(
+                                        launchURL(
                                             'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
                                       }),
                               ),
@@ -387,7 +387,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                 ),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
-                                    print(
+                                    launchURL(
                                         'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
                                   }),
                           ),
