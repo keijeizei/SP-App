@@ -121,19 +121,19 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
             title: const Text('Rename receipt'),
             content: Container(
                 width: MediaQuery.of(context).size.width,
-                height: 86,
                 color: Colors.white,
                 child: Form(
                     key: _formKey,
-                    child: Column(children: [
-                      TextFormField(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Flexible(
+                          child: TextFormField(
                         controller: _titleController,
                         validator: validateText,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           labelText: 'Receipt name',
                         ),
-                      ),
+                      )),
                     ]))),
             actions: [
               Row(
@@ -247,66 +247,70 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                         key: _formKey,
                         child: Container(
                             width: MediaQuery.of(context).size.width,
-                            height: 306,
+                            // height: 306,
                             color: Colors.white,
-                            child: Column(children: [
-                              TextFormField(
-                                controller: _abbreviationController,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  labelText:
-                                      'Receipt abbreviated name (optional)',
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              RichText(
-                                text: TextSpan(
-                                    text: 'Auto-fill full item name',
-                                    style: const TextStyle(color: Colors.blue),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () {
-                                        if (_abbreviationController
-                                            .text.isNotEmpty) {
-                                          print(
-                                              'http:// this is the api call ${_abbreviationController.text}');
-                                        } else {
-                                          showSnackbar(context,
-                                              'To use auto-fill, you must enter the abbreviated name from your receipt');
-                                        }
-                                      }),
-                              ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _itemNameController,
-                                validator: validateText,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  labelText: 'Item name',
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              RichText(
-                                text: TextSpan(
-                                    text: 'Search this item on Google Images',
-                                    style: const TextStyle(
-                                      color: Colors.blue,
+                            child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextFormField(
+                                    controller: _abbreviationController,
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      labelText:
+                                          'Receipt abbreviated name (optional)',
                                     ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () {
-                                        launchURL(
-                                            'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
-                                      }),
-                              ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _priceController,
-                                validator: validatePrice,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  labelText: 'Price',
-                                ),
-                              ),
-                            ])))),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  RichText(
+                                    text: TextSpan(
+                                        text: 'Auto-fill full item name',
+                                        style:
+                                            const TextStyle(color: Colors.blue),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () {
+                                            if (_abbreviationController
+                                                .text.isNotEmpty) {
+                                              print(
+                                                  'http:// this is the api call ${_abbreviationController.text}');
+                                            } else {
+                                              showSnackbar(context,
+                                                  'To use auto-fill, you must enter the abbreviated name from your receipt');
+                                            }
+                                          }),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: _itemNameController,
+                                    validator: validateText,
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      labelText: 'Item name',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  RichText(
+                                    text: TextSpan(
+                                        text:
+                                            'Search this item on Google Images',
+                                        style: const TextStyle(
+                                          color: Colors.blue,
+                                        ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () {
+                                            launchURL(
+                                                'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
+                                          }),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: _priceController,
+                                    validator: validatePrice,
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      labelText: 'Price',
+                                    ),
+                                  ),
+                                ])))),
                 actions: [
                   Row(
                     children: [
@@ -365,9 +369,10 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                     key: _formKey,
                     child: Container(
                         width: MediaQuery.of(context).size.width,
-                        height: 294,
+                        // height: 294,
                         color: Colors.white,
-                        child: Column(children: [
+                        child:
+                            Column(mainAxisSize: MainAxisSize.min, children: [
                           TextFormField(
                             controller:
                                 TextEditingController(text: data.abbreviation),
@@ -608,13 +613,33 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                   ]),
                 ),
                 // Receipt Description
-                Text(
-                  "Click an item to edit.",
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
-                      height: 150 / 100),
-                ),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: "Click an item to edit. Click ",
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                            height: 150 / 100),
+                      ),
+                      WidgetSpan(
+                        child: Icon(
+                          Icons.add,
+                          size: 14,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      TextSpan(
+                        text: " to manually add an item.",
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                            height: 150 / 100),
+                      ),
+                    ],
+                  ),
+                )
               ],
             ),
           ),

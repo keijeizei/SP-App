@@ -27,12 +27,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // db.insertReceipt(Receipt(
-    //     id: -1,
-    //     title: 'Resibo2',
-    //     photo: 'assets/images/list2.jpg',
-    //     date: 1677299899069,
-    //     price: 124.36));
     refreshDB();
   }
 
@@ -110,27 +104,66 @@ class _HomePageState extends State<HomePage> {
                         future: savedReceipt,
                         builder: (context, AsyncSnapshot snapshot) {
                           if (!snapshot.hasData) {
-                            return Center(child: CircularProgressIndicator());
+                            return const Center(
+                                child: CircularProgressIndicator());
                           } else {
                             return Container(
                               margin: const EdgeInsets.only(top: 4),
                               // height: 220,
-                              child: ListView.separated(
-                                shrinkWrap: true,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                itemCount: snapshot.data.length,
-                                physics: const NeverScrollableScrollPhysics(),
-                                separatorBuilder: (context, index) {
-                                  return const SizedBox(height: 16);
-                                },
-                                itemBuilder: (context, index) {
-                                  return ReceiptTile(
-                                    data: snapshot.data[index],
-                                    refreshDB: refreshDB,
-                                  );
-                                },
-                              ),
+                              child: snapshot.data.isEmpty
+                                  ? Column(children: [
+                                      const SizedBox(
+                                        height: 14,
+                                      ),
+                                      const Text(
+                                        'No saved receipts',
+                                        style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'inter'),
+                                      ),
+                                      const SizedBox(
+                                        height: 12,
+                                      ),
+                                      RichText(
+                                        text: const TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text:
+                                                  "Add a receipt by clicking the ",
+                                            ),
+                                            WidgetSpan(
+                                              child: Icon(
+                                                Icons.camera_alt_outlined,
+                                                size: 14,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: " button.",
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ])
+                                  : ListView.separated(
+                                      shrinkWrap: true,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16),
+                                      itemCount: snapshot.data.length,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      separatorBuilder: (context, index) {
+                                        return const SizedBox(height: 16);
+                                      },
+                                      itemBuilder: (context, index) {
+                                        return ReceiptTile(
+                                          data: snapshot.data[index],
+                                          refreshDB: refreshDB,
+                                        );
+                                      },
+                                    ),
                             );
                           }
                         })
