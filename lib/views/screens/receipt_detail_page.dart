@@ -297,8 +297,14 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                         ),
                                         recognizer: TapGestureRecognizer()
                                           ..onTap = () {
-                                            launchURL(
-                                                'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
+                                            if (_itemNameController
+                                                .text.isNotEmpty) {
+                                              launchURL(
+                                                  'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
+                                            } else {
+                                              showSnackbar(context,
+                                                  'Item name must not be empty.');
+                                            }
                                           }),
                                   ),
                                   const SizedBox(height: 16),
@@ -400,8 +406,13 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                 ),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
-                                    launchURL(
-                                        'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
+                                    if (_itemNameController.text.isNotEmpty) {
+                                      launchURL(
+                                          'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
+                                    } else {
+                                      showSnackbar(context,
+                                          'Item name must not be empty.');
+                                    }
                                   }),
                           ),
                           const SizedBox(height: 16),
