@@ -31,6 +31,10 @@ class _CropperScreenState extends State<CropperScreen> {
 
   DBHelper db = DBHelper();
 
+  bool _isNumeric(String str) {
+    return double.tryParse(str) != null;
+  }
+
   Future<void> cropImage(context) async {
     // final scale = cropKey.currentState.scale;
     final area = cropKey.currentState?.area ?? const Rect.fromLTRB(0, 0, 0, 0);
@@ -53,8 +57,7 @@ class _CropperScreenState extends State<CropperScreen> {
 
     debugPrint('$file');
 
-    processImage(InputImage.fromFile(file));
-
+    // create new entry in receipt DB
     Receipt receiptData = Receipt(
         id: -1,
         title: 'New Receipt',
@@ -63,8 +66,32 @@ class _CropperScreenState extends State<CropperScreen> {
         price: 0);
 
     int trueId = await db.insertReceipt(receiptData);
-    print(trueId);
     receiptData.id = trueId;
+
+    // parse the text from the image
+    List<String> receiptList = await processImage(InputImage.fromFile(file));
+
+    List<String> itemList = [];
+    List<double> priceList = [];
+
+    // divide receiptList to itemList and priceList
+    for (var i = 0; i < receiptList.length; i++) {
+      if (_isNumeric(receiptList[i])) {
+        priceList.add(double.parse(receiptList[i]));
+      } else {
+        itemList.add(receiptList[i]);
+      }
+    }
+
+    // insert itemList priceList pairs
+    for (var i = 0; i < itemList.length; i++) {
+      await db.insertItem(Item(
+          id: -1,
+          name: itemList[i],
+          abbreviation: itemList[i],
+          price: i < priceList.length ? priceList[i] : 0.0,
+          receipt_id: trueId));
+    }
 
     await Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => ReceiptDetailPage(data: receiptData)));
@@ -75,12 +102,12 @@ class _CropperScreenState extends State<CropperScreen> {
   final TextRecognizer _textRecognizer =
       TextRecognizer(script: TextRecognitionScript.latin);
 
-  Future<void> processImage(InputImage inputImage) async {
+  Future<List<String>> processImage(InputImage inputImage) async {
     final recognizedText = await _textRecognizer.processImage(inputImage);
     _text = 'Recognized text:\n\n${recognizedText.text}';
-    print('hihi');
     print(_text);
-    print(recognizedText.blocks);
+
+    List<String> itemList = [];
 
     for (TextBlock block in recognizedText.blocks) {
       final Rect rect = block.boundingBox;
@@ -88,17 +115,22 @@ class _CropperScreenState extends State<CropperScreen> {
       final String text = block.text;
       final List<String> languages = block.recognizedLanguages;
 
-      print(rect.toString());
-      print(cornerPoints.toString());
-      print('haha');
+      // print(rect.toString());
+      // print(cornerPoints.toString());
+      // print(text);
+      // print('NEXT');
 
       for (TextLine line in block.lines) {
         // Same getters as TextBlock
-        for (TextElement element in line.elements) {
-          // Same getters as TextBlock
-        }
+        print(line.text);
+        print('NEXT');
+        itemList.add(line.text);
+        // for (TextElement element in line.elements) {
+        //   // Same getters as TextBlock
+        // }
       }
     }
+    return itemList;
   }
 
   @override

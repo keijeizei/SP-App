@@ -39,7 +39,7 @@ class ItemTile extends StatelessWidget {
           Flexible(
             flex: 3,
             child: Text(
-              '₱${data.price}',
+              '₱${data.price.toStringAsFixed(2)}',
               style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,

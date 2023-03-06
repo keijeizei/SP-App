@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:path/path.dart';
 import 'package:sp_app/models/core/receipt.dart';
 import 'package:sp_app/views/screens/full_screen_image.dart';
 import 'package:sp_app/views/utils/AppColor.dart';
@@ -54,6 +55,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     //     price: 124.36,
     //     receipt_id: 1));
 
+    recalculateTotal();
     refreshDB();
   }
 
@@ -199,6 +201,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
+                        File photo = File(widget.data.photo);
+                        photo.delete();
                         db.deleteReceipt(widget.data.id);
                         Navigator.popUntil(context,
                             (Route<dynamic> predicate) => predicate.isFirst);
@@ -331,7 +335,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
   showEditDialog(context, data) {
     if (data != null) {
       _itemNameController.text = data.name;
-      _priceController.text = data.price.toString();
+      _priceController.text = data.price.toStringAsFixed(2);
     }
     return showDialog(
         context: context,
@@ -548,7 +552,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                     Container(
                       margin: const EdgeInsets.only(left: 5),
                       child: Text(
-                        _totalPrice.toString(),
+                        _totalPrice.toStringAsFixed(2),
                         style:
                             const TextStyle(color: Colors.white, fontSize: 12),
                       ),
