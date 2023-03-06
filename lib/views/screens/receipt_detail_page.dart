@@ -113,6 +113,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
   // Rename the receipt
   showRenameDialog(context) {
+    String originalName = _titleController.text;
     return showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -120,17 +121,20 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
             title: const Text('Rename receipt'),
             content: Container(
                 width: MediaQuery.of(context).size.width,
-                height: 64,
+                height: 86,
                 color: Colors.white,
-                child: Column(children: [
-                  TextField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Receipt name',
-                    ),
-                  ),
-                ])),
+                child: Form(
+                    key: _formKey,
+                    child: Column(children: [
+                      TextFormField(
+                        controller: _titleController,
+                        validator: validateText,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Receipt name',
+                        ),
+                      ),
+                    ]))),
             actions: [
               Row(
                 children: [
@@ -138,6 +142,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                     width: 120,
                     child: TextButton(
                       onPressed: () {
+                        _titleController.text =
+                            originalName; // reset controller value
                         Navigator.of(context).pop();
                       },
                       style: TextButton.styleFrom(
@@ -149,15 +155,17 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        print(widget.data.id.toString());
-                        print(_titleController.text);
-                        db.updateReceipt(Receipt(
-                            id: widget.data.id,
-                            title: _titleController.text,
-                            photo: widget.data.photo,
-                            date: widget.data.date,
-                            price: widget.data.price));
-                        Navigator.of(context).pop();
+                        if (_formKey.currentState!.validate()) {
+                          print(widget.data.id.toString());
+                          print(_titleController.text);
+                          db.updateReceipt(Receipt(
+                              id: widget.data.id,
+                              title: _titleController.text,
+                              photo: widget.data.photo,
+                              date: widget.data.date,
+                              price: widget.data.price));
+                          Navigator.of(context).pop();
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
@@ -579,7 +587,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                 Container(
                   margin: const EdgeInsets.only(bottom: 0, top: 8),
                   child: Row(children: [
-                    Expanded(
+                    Flexible(
                         child: Text(
                       _titleController.text,
                       overflow: TextOverflow.fade,
