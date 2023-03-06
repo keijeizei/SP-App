@@ -22,6 +22,9 @@ class ItemTile extends StatelessWidget {
                 children: [
                   Text(
                     data.name,
+                    overflow: TextOverflow.fade,
+                    maxLines: 1,
+                    softWrap: false,
                     style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -29,6 +32,9 @@ class ItemTile extends StatelessWidget {
                   ),
                   Text(
                     data.abbreviation,
+                    overflow: TextOverflow.fade,
+                    maxLines: 1,
+                    softWrap: false,
                     style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w200,

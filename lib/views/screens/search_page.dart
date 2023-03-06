@@ -25,7 +25,7 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
 
-    searchResult = db.getReceipts();
+    searchResult = Future.value([]);
   }
 
   void updateSortMode(int mode) async {
@@ -99,6 +99,7 @@ class _SearchPageState extends State<SearchPage> {
                               color: AppColor.primarySoft),
                           child: TextField(
                             controller: searchInputController,
+                            autofocus: true,
                             onChanged: (value) {
                               setState(() {});
                             },
@@ -225,7 +226,7 @@ class _SearchPageState extends State<SearchPage> {
                         Container(
                           margin: const EdgeInsets.only(bottom: 15),
                           child: const Text(
-                            'This is the result of your search..',
+                            'Search results',
                             style: TextStyle(color: Colors.grey, fontSize: 12),
                           ),
                         ),

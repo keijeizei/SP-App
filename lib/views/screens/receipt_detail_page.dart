@@ -11,6 +11,7 @@ import 'package:sp_app/views/utils/AppColor.dart';
 import 'package:sp_app/views/widgets/item_tile.dart';
 import '../../models/helper/db_helper.dart';
 import '../utils/datetime_converter.dart';
+import '../utils/misc_utils.dart';
 
 class ReceiptDetailPage extends StatefulWidget {
   final Receipt data;
@@ -31,6 +32,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
   late final TextEditingController _abbreviationController =
       TextEditingController(); // for adding new items only
   late final TextEditingController _priceController = TextEditingController();
+
+  final _formKey = GlobalKey<FormState>();
 
   late Future<List<Item>> itemList;
 
@@ -232,65 +235,70 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
               body: AlertDialog(
                 content: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
-                    child: Container(
-                        width: MediaQuery.of(context).size.width,
-                        height: 280,
-                        color: Colors.white,
-                        child: Column(children: [
-                          TextField(
-                            controller: _abbreviationController,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              labelText: 'Receipt abbreviated name (optional)',
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          RichText(
-                            text: TextSpan(
-                                text: 'Auto-fill full item name',
-                                style: const TextStyle(color: Colors.blue),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    if (_abbreviationController
-                                        .text.isNotEmpty) {
-                                      print(
-                                          'http:// this is the api call ${_abbreviationController.text}');
-                                    } else {
-                                      showSnackbar(context,
-                                          'Enter the abbreviated name from your receipt to auto-fill.');
-                                    }
-                                  }),
-                          ),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: _itemNameController,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              labelText: 'Item name',
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          RichText(
-                            text: TextSpan(
-                                text: 'Search this item on Google Images',
-                                style: const TextStyle(
-                                  color: Colors.blue,
+                    child: Form(
+                        key: _formKey,
+                        child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            height: 306,
+                            color: Colors.white,
+                            child: Column(children: [
+                              TextFormField(
+                                controller: _abbreviationController,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  labelText:
+                                      'Receipt abbreviated name (optional)',
                                 ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    print(
-                                        'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
-                                  }),
-                          ),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: _priceController,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              labelText: 'Price',
-                            ),
-                          ),
-                        ]))),
+                              ),
+                              const SizedBox(height: 4),
+                              RichText(
+                                text: TextSpan(
+                                    text: 'Auto-fill full item name',
+                                    style: const TextStyle(color: Colors.blue),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        if (_abbreviationController
+                                            .text.isNotEmpty) {
+                                          print(
+                                              'http:// this is the api call ${_abbreviationController.text}');
+                                        } else {
+                                          showSnackbar(context,
+                                              'To use auto-fill, you must enter the abbreviated name from your receipt');
+                                        }
+                                      }),
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _itemNameController,
+                                validator: validateText,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  labelText: 'Item name',
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              RichText(
+                                text: TextSpan(
+                                    text: 'Search this item on Google Images',
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        print(
+                                            'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
+                                      }),
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _priceController,
+                                validator: validatePrice,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  labelText: 'Price',
+                                ),
+                              ),
+                            ])))),
                 actions: [
                   Row(
                     children: [
@@ -309,15 +317,17 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            db.insertItem(Item(
-                                id: -1,
-                                name: _itemNameController.text,
-                                abbreviation: _abbreviationController.text,
-                                price: double.parse(_priceController.text),
-                                receipt_id: receipt_id));
-                            recalculateTotal();
-                            refreshDB();
-                            Navigator.of(context).pop();
+                            if (_formKey.currentState!.validate()) {
+                              db.insertItem(Item(
+                                  id: -1,
+                                  name: _itemNameController.text,
+                                  abbreviation: _abbreviationController.text,
+                                  price: double.parse(_priceController.text),
+                                  receipt_id: receipt_id));
+                              recalculateTotal();
+                              refreshDB();
+                              Navigator.of(context).pop();
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColor.primary,
@@ -343,50 +353,54 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
           return AlertDialog(
             content: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
-                child: Container(
-                    width: MediaQuery.of(context).size.width,
-                    height: 250,
-                    color: Colors.white,
-                    child: Column(children: [
-                      TextField(
-                        controller:
-                            TextEditingController(text: data.abbreviation),
-                        enabled: false,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Detected receipt name',
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      TextField(
-                        controller: _itemNameController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Item name',
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      RichText(
-                        text: TextSpan(
-                            text: 'Search this item on Google Images',
-                            style: const TextStyle(
-                              color: Colors.blue,
+                child: Form(
+                    key: _formKey,
+                    child: Container(
+                        width: MediaQuery.of(context).size.width,
+                        height: 294,
+                        color: Colors.white,
+                        child: Column(children: [
+                          TextFormField(
+                            controller:
+                                TextEditingController(text: data.abbreviation),
+                            enabled: false,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Detected receipt name',
                             ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                print(
-                                    'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
-                              }),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _priceController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Price',
-                        ),
-                      ),
-                    ]))),
+                          ),
+                          const SizedBox(height: 24),
+                          TextFormField(
+                            controller: _itemNameController,
+                            validator: validateText,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Item name',
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          RichText(
+                            text: TextSpan(
+                                text: 'Search this item on Google Images',
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    print(
+                                        'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
+                                  }),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _priceController,
+                            validator: validatePrice,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Price',
+                            ),
+                          ),
+                        ])))),
             actions: [
               Row(
                 children: [
@@ -420,15 +434,17 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        await db.updateItem(Item(
-                            id: data.id,
-                            name: _itemNameController.text,
-                            abbreviation: data.abbreviation,
-                            price: double.parse(_priceController.text),
-                            receipt_id: data.receipt_id));
-                        recalculateTotal();
-                        refreshDB();
-                        Navigator.of(context).pop();
+                        if (_formKey.currentState!.validate()) {
+                          await db.updateItem(Item(
+                              id: data.id,
+                              name: _itemNameController.text,
+                              abbreviation: data.abbreviation,
+                              price: double.parse(_priceController.text),
+                              receipt_id: data.receipt_id));
+                          recalculateTotal();
+                          refreshDB();
+                          Navigator.of(context).pop();
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
@@ -528,7 +544,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Receipt Calories and Time
+                // Receipt Date and Price
                 Row(
                   children: [
                     const Icon(Icons.calendar_month,
@@ -561,16 +577,20 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                 ),
                 // Receipt Title
                 Container(
-                  margin: const EdgeInsets.only(bottom: 12, top: 16),
+                  margin: const EdgeInsets.only(bottom: 0, top: 8),
                   child: Row(children: [
-                    Text(
+                    Expanded(
+                        child: Text(
                       _titleController.text,
+                      overflow: TextOverflow.fade,
+                      maxLines: 1,
+                      softWrap: false,
                       style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'inter'),
-                    ),
+                    )),
                     IconButton(
                         onPressed: () {
                           showRenameDialog(context);

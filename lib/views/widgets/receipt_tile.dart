@@ -55,6 +55,9 @@ class ReceiptTile extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 12),
                       child: Text(
                         data.title,
+                        overflow: TextOverflow.fade,
+                        maxLines: 1,
+                        softWrap: false,
                         style: const TextStyle(
                             fontWeight: FontWeight.w600, fontFamily: 'inter'),
                       ),

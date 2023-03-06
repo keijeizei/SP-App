@@ -15,6 +15,7 @@ import 'package:sp_app/views/screens/full_screen_image.dart';
 import 'package:sp_app/views/screens/receipt_detail_page.dart';
 
 import '../utils/AppColor.dart';
+import '../utils/misc_utils.dart';
 
 class CropperScreen extends StatefulWidget {
   final File imageFile;
@@ -30,10 +31,6 @@ class _CropperScreenState extends State<CropperScreen> {
   final cropKey = GlobalKey<CropState>();
 
   DBHelper db = DBHelper();
-
-  bool _isNumeric(String str) {
-    return double.tryParse(str) != null;
-  }
 
   Future<void> cropImage(context) async {
     // final scale = cropKey.currentState.scale;
@@ -76,7 +73,7 @@ class _CropperScreenState extends State<CropperScreen> {
 
     // divide receiptList to itemList and priceList
     for (var i = 0; i < receiptList.length; i++) {
-      if (_isNumeric(receiptList[i])) {
+      if (isNumeric(receiptList[i])) {
         priceList.add(double.parse(receiptList[i]));
       } else {
         itemList.add(receiptList[i]);
