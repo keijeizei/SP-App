@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -37,8 +40,9 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
   final _formKey = GlobalKey<FormState>();
 
-  late Future<List<Item>> itemList;
+  Color appBarColor = Colors.transparent;
 
+  late Future<List<Item>> itemList;
   late double _totalPrice;
   int _itemCount = 0;
 
@@ -57,15 +61,19 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     recalculateTotal();
     refreshDB();
 
+    // expand all items if receipt is newly-captured
     if (widget.isNewReceipt) {
-      expandAllItems();
+      showDecodingModal(context);
+      expandAllItems(1);
     }
   }
 
   void refreshDB() async {
-    setState(() {
-      itemList = db.getItems(widget.data.id);
-    });
+    if (mounted) {
+      setState(() {
+        itemList = db.getItems(widget.data.id);
+      });
+    }
   }
 
   Future<void> recalculateTotal() async {
@@ -85,26 +93,86 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     });
   }
 
-  void expandAllItems() async {
+  Future<void> expandItem(List<Item> presentItemList, int i) async {
+    Response response = await expandItemName(presentItemList[i].abbreviation);
+
+    List<String> nameList = [];
+    for (var j = 0; j < response.data.length; j++) {
+      nameList.add(response.data[j][0][1]);
+    }
+
+    String name = nameList.join(' ');
+
+    db.updateItem(Item(
+        id: presentItemList[i].id,
+        name: name,
+        abbreviation: presentItemList[i].abbreviation,
+        price: presentItemList[i].price,
+        receipt_id: widget.data.id));
+    refreshDB();
+  }
+
+  int currentStep = 0;
+  Timer? udpateNotificationAfter1Second;
+
+  // expand all items and shows a progress bar notification
+  Future<void> expandAllItems(int id) async {
     List<Item> presentItemList = await db.getItems(widget.data.id);
+    int maxStep = presentItemList.length;
 
-    for (var i = 0; i < presentItemList.length; i++) {
-      Response response = await expandItemName(presentItemList[i].abbreviation);
+    for (var simulatedStep = 1; simulatedStep <= maxStep + 1; simulatedStep++) {
+      currentStep = simulatedStep;
+      if (udpateNotificationAfter1Second != null) continue;
 
-      List<String> nameList = [];
-      for (var j = 0; j < response.data.length; j++) {
-        nameList.add(response.data[j][0][1]);
+      String itemName;
+      if (simulatedStep <= maxStep) {
+        itemName = presentItemList[currentStep - 1].abbreviation;
+      } else {
+        itemName = '';
       }
 
-      String name = nameList.join(' ');
+      udpateNotificationAfter1Second = Timer(const Duration(seconds: 1), () {
+        _updateCurrentProgressBar(
+            id: id,
+            simulatedStep: currentStep,
+            maxStep: maxStep,
+            itemName: itemName);
+        udpateNotificationAfter1Second?.cancel();
+        udpateNotificationAfter1Second = null;
+      });
 
-      db.updateItem(Item(
-          id: presentItemList[i].id,
-          name: name,
-          abbreviation: presentItemList[i].abbreviation,
-          price: presentItemList[i].price,
-          receipt_id: widget.data.id));
-      refreshDB();
+      if (simulatedStep <= maxStep) {
+        await expandItem(presentItemList, currentStep - 1);
+      }
+    }
+  }
+
+  void _updateCurrentProgressBar(
+      {required int id,
+      required int simulatedStep,
+      required int maxStep,
+      required String itemName}) {
+    if (simulatedStep > maxStep) {
+      AwesomeNotifications().createNotification(
+          content: NotificationContent(
+              id: id,
+              channelKey: 'basic_channel',
+              title: 'Receipt decoding finished',
+              body: 'All items in your receipt have been decoded.',
+              category: NotificationCategory.Progress,
+              locked: false));
+    } else {
+      int progress = min((simulatedStep / maxStep * 100).round(), 100);
+      AwesomeNotifications().createNotification(
+          content: NotificationContent(
+              id: id,
+              channelKey: 'basic_channel',
+              title: 'Decoding your receipt... ($simulatedStep/$maxStep)',
+              body: itemName,
+              category: NotificationCategory.Progress,
+              notificationLayout: NotificationLayout.ProgressBar,
+              progress: progress,
+              locked: true));
     }
   }
 
@@ -115,8 +183,6 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     }
     return null;
   }
-
-  Color appBarColor = Colors.transparent;
 
   changeAppBarColor(ScrollController scrollController) {
     if (scrollController.position.hasPixels) {
@@ -141,6 +207,41 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(text),
     ));
+  }
+
+  showDecodingModal(context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            // title: Text(''),
+            content: Container(
+                width: MediaQuery.of(context).size.width,
+                color: Colors.white,
+                child: Column(mainAxisSize: MainAxisSize.min, children: const [
+                  Text(
+                      'Decoding your receipt abbreviations in the background. Do not close the app and allow about a minute while we update your receipt names.')
+                ])),
+            actions: [
+              Row(
+                children: [
+                  SizedBox(
+                    width: 120,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey[600],
+                      ),
+                      child: const Text('OK'),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          );
+        });
   }
 
   // Delete a receipt/item
