@@ -38,6 +38,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
   late Future<List<Item>> itemList;
 
   late double _totalPrice;
+  int _itemCount = 0;
 
   DBHelper db = DBHelper();
 
@@ -81,13 +82,14 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
     setState(() {
       _totalPrice = totalPrice;
+      _itemCount = presentItemList.length;
     });
   }
 
   String? _validateNames(String? value) {
     if (_itemNameController.text.isEmpty &&
         _abbreviationController.text.isEmpty) {
-      return 'Enter full name or abbreviated name';
+      return 'Either full name or abbreviated name required';
     }
     return null;
   }
@@ -235,6 +237,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
   // Add an item
   showAddDialog(context, receipt_id) {
     _itemNameController.text = '';
+    _abbreviationController.text = '';
     _priceController.text = '';
     return showDialog(
         context: context,
@@ -608,7 +611,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                             const TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 14),
                     SvgPicture.asset(
                       'assets/icons/peso.svg',
                       colorFilter:
@@ -620,6 +623,17 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                       margin: const EdgeInsets.only(left: 5),
                       child: Text(
                         _totalPrice.toStringAsFixed(2),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Icon(Icons.shopping_basket_outlined,
+                        color: Colors.white, size: 16),
+                    Container(
+                      margin: const EdgeInsets.only(left: 5),
+                      child: Text(
+                        _itemCount.toString(),
                         style:
                             const TextStyle(color: Colors.white, fontSize: 12),
                       ),
@@ -712,7 +726,6 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
           //   ),
           // ),
           // IndexedStack based on TabBar index
-          // TODO: fix data.items by querying the items from db, .items has been removed from Receipt model
           FutureBuilder(
               future: itemList,
               builder: (context, AsyncSnapshot snapshot) {
