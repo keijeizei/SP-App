@@ -18,7 +18,10 @@ class ReceiptTile extends StatelessWidget {
       onTap: () {
         Navigator.of(context)
             .push(MaterialPageRoute(
-                builder: (context) => ReceiptDetailPage(data: data)))
+                builder: (context) => ReceiptDetailPage(
+                      data: data,
+                      isNewReceipt: true,
+                    )))
             .then((_) => refreshDB());
       },
       child: Container(

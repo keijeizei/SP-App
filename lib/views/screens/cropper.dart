@@ -91,7 +91,8 @@ class _CropperScreenState extends State<CropperScreen> {
     }
 
     await Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => ReceiptDetailPage(data: receiptData)));
+        builder: (context) =>
+            ReceiptDetailPage(data: receiptData, isNewReceipt: true)));
   }
 
   String? _text;

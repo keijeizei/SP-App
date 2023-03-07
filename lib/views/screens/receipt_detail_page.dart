@@ -8,6 +8,7 @@ import 'package:path/path.dart';
 import 'package:sp_app/models/core/receipt.dart';
 import 'package:sp_app/views/screens/full_screen_image.dart';
 import 'package:sp_app/views/utils/AppColor.dart';
+import 'package:sp_app/views/utils/api.dart';
 import 'package:sp_app/views/widgets/item_tile.dart';
 import '../../models/helper/db_helper.dart';
 import '../utils/datetime_converter.dart';
@@ -15,7 +16,8 @@ import '../utils/misc_utils.dart';
 
 class ReceiptDetailPage extends StatefulWidget {
   final Receipt data;
-  ReceiptDetailPage({required this.data});
+  final bool isNewReceipt;
+  ReceiptDetailPage({required this.data, required this.isNewReceipt});
 
   @override
   _ReceiptDetailPageState createState() => _ReceiptDetailPageState();
@@ -52,15 +54,12 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
     _totalPrice = widget.data.price;
 
-    // db.insertItem(Item(
-    //     id: -1,
-    //     name: 'Itlog69',
-    //     abbreviation: 'ITLG69',
-    //     price: 124.36,
-    //     receipt_id: 1));
-
     recalculateTotal();
     refreshDB();
+
+    if (widget.isNewReceipt) {
+      expandAllItems();
+    }
   }
 
   void refreshDB() async {
@@ -84,6 +83,29 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
       _totalPrice = totalPrice;
       _itemCount = presentItemList.length;
     });
+  }
+
+  void expandAllItems() async {
+    List<Item> presentItemList = await db.getItems(widget.data.id);
+
+    for (var i = 0; i < presentItemList.length; i++) {
+      Response response = await expandItemName(presentItemList[i].abbreviation);
+
+      List<String> nameList = [];
+      for (var j = 0; j < response.data.length; j++) {
+        nameList.add(response.data[j][0][1]);
+      }
+
+      String name = nameList.join(' ');
+
+      db.updateItem(Item(
+          id: presentItemList[i].id,
+          name: name,
+          abbreviation: presentItemList[i].abbreviation,
+          price: presentItemList[i].price,
+          receipt_id: widget.data.id));
+      refreshDB();
+    }
   }
 
   String? _validateNames(String? value) {
