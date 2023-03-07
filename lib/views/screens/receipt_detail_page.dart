@@ -8,6 +8,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sp_app/models/core/receipt.dart';
 import 'package:sp_app/views/screens/full_screen_image.dart';
 import 'package:sp_app/views/utils/AppColor.dart';
@@ -65,8 +66,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
     // expand all items if receipt is newly-captured
     if (widget.isNewReceipt) {
-      // TODO: make this work, find a way to access the context
-      // showDecodingModal(context);
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => showDecodingModal(this.context));
 
       expandAllItems(1);
     }
@@ -259,39 +260,53 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     ));
   }
 
-  showDecodingModal(context) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            // title: Text(''),
-            content: Container(
-                width: MediaQuery.of(context).size.width,
-                color: Colors.white,
-                child: Column(mainAxisSize: MainAxisSize.min, children: const [
-                  Text(
-                      'Decoding your receipt abbreviations in the background. Do not close the app and allow about a minute while we update your receipt names.')
-                ])),
-            actions: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: 120,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.grey[600],
+  showDecodingModal(context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool showDecodingTooltip = prefs.getBool('showDecodingTooltip') ?? true;
+
+    return showDecodingTooltip
+        ? showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                // title: Text(''),
+                content: Container(
+                    width: MediaQuery.of(context).size.width,
+                    color: Colors.white,
+                    child:
+                        Column(mainAxisSize: MainAxisSize.min, children: const [
+                      Text(
+                          'Decoding your receipt abbreviations in the background. Do not close the app and allow about a minute while we update your receipt names.')
+                    ])),
+                actions: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          prefs.setBool('showDecodingTooltip', false);
+                          Navigator.of(context).pop();
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.grey[600],
+                        ),
+                        child: const Text("DON'T SHOW AGAIN"),
                       ),
-                      child: const Text('OK'),
-                    ),
-                  ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.grey[600],
+                        ),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  )
                 ],
-              )
-            ],
-          );
-        });
+              );
+            })
+        : null;
   }
 
   // Delete a receipt/item

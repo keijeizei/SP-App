@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sp_app/views/screens/page_switcher.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -11,7 +12,7 @@ import 'models/helper/db_helper.dart';
 List<CameraDescription> cameras = [];
 
 Future<void> main() async {
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     systemNavigationBarColor: Colors.black,
     systemNavigationBarIconBrightness: Brightness.light,
   ));
@@ -34,9 +35,7 @@ Future<void> main() async {
       ],
       debug: true);
 
-  // DBHelper db = DBHelper();
-
-  // final database = db.initializeDB();
+  SharedPreferences.setMockInitialValues({});
 
   runApp(MyApp());
 }
