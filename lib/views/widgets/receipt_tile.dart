@@ -20,7 +20,7 @@ class ReceiptTile extends StatelessWidget {
             .push(MaterialPageRoute(
                 builder: (context) => ReceiptDetailPage(
                       data: data,
-                      isNewReceipt: true,
+                      isNewReceipt: false,
                     )))
             .then((_) => refreshDB());
       },

@@ -28,6 +28,8 @@ class ReceiptDetailPage extends StatefulWidget {
 
 class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     with TickerProviderStateMixin {
+  int MAX_ABBR_LENGTH = 50;
+
   late ScrollController _scrollController;
 
   late final TextEditingController _titleController =
@@ -63,7 +65,9 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
     // expand all items if receipt is newly-captured
     if (widget.isNewReceipt) {
-      showDecodingModal(context);
+      // TODO: make this work, find a way to access the context
+      // showDecodingModal(context);
+
       expandAllItems(1);
     }
   }
@@ -93,8 +97,54 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     });
   }
 
-  Future<void> expandItem(List<Item> presentItemList, int i) async {
-    Response response = await expandItemName(presentItemList[i].abbreviation);
+  showLoading(context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              SizedBox(height: 10),
+              SizedBox(
+                height: 72,
+                width: 72,
+                child: CircularProgressIndicator(),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: 10.0),
+                child: Text(
+                  "Decoding item abbreviation,\nplease wait...",
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<String> expandName(context, String abbreviation) async {
+    Response response = await expandItemName(abbreviation);
+
+    if (!response.success) {
+      showSnackbar(context,
+          'Abbreviation decoding failed. Please check your internet connection.');
+      return '';
+    }
+
+    List<String> nameList = [];
+    for (var j = 0; j < response.data.length; j++) {
+      nameList.add(response.data[j][0][1]);
+    }
+
+    return nameList.join(' ');
+  }
+
+  Future<void> expandItem(Item item) async {
+    Response response = await expandItemName(item.abbreviation);
 
     List<String> nameList = [];
     for (var j = 0; j < response.data.length; j++) {
@@ -104,10 +154,10 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     String name = nameList.join(' ');
 
     db.updateItem(Item(
-        id: presentItemList[i].id,
+        id: item.id,
         name: name,
-        abbreviation: presentItemList[i].abbreviation,
-        price: presentItemList[i].price,
+        abbreviation: item.abbreviation,
+        price: item.price,
         receipt_id: widget.data.id));
     refreshDB();
   }
@@ -142,7 +192,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
       });
 
       if (simulatedStep <= maxStep) {
-        await expandItem(presentItemList, currentStep - 1);
+        await expandItem(presentItemList[currentStep - 1]);
       }
     }
   }
@@ -382,10 +432,13 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                   TextFormField(
                                     controller: _abbreviationController,
                                     validator: _validateNames,
+                                    maxLength: MAX_ABBR_LENGTH,
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(),
                                       labelText:
                                           'Abbreviated receipt name (optional)',
+                                      counterText: '',
+                                      counterStyle: TextStyle(fontSize: 0),
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -395,11 +448,24 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                         style:
                                             const TextStyle(color: Colors.blue),
                                         recognizer: TapGestureRecognizer()
-                                          ..onTap = () {
+                                          ..onTap = () async {
                                             if (_abbreviationController
                                                 .text.isNotEmpty) {
-                                              print(
-                                                  'http:// this is the api call ${_abbreviationController.text}');
+                                              // Show the loading dialog
+                                              showLoading(context);
+
+                                              String name = await expandName(
+                                                  context,
+                                                  _abbreviationController.text);
+                                              setState(() {
+                                                if (name.isNotEmpty) {
+                                                  _itemNameController.text =
+                                                      name;
+                                                }
+                                              });
+
+                                              // pop the loading dialog
+                                              Navigator.of(context).pop();
                                             } else {
                                               showSnackbar(context,
                                                   'To use auto-fill, you must enter the abbreviated name from your receipt');
@@ -497,138 +563,160 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     return showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-            content: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: Form(
-                    key: _formKey,
-                    child: Container(
-                        width: MediaQuery.of(context).size.width,
-                        // height: 294,
-                        color: Colors.white,
-                        child:
-                            Column(mainAxisSize: MainAxisSize.min, children: [
-                          TextFormField(
-                            controller: _abbreviationController,
-                            validator: _validateNames,
-                            // enabled: true,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              labelText: 'Abbreviated receipt name',
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          RichText(
-                            text: TextSpan(
-                                text: 'Auto-fill full item name',
-                                style: const TextStyle(color: Colors.blue),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    if (_abbreviationController
-                                        .text.isNotEmpty) {
-                                      print(
-                                          'http:// this is the api call ${_abbreviationController.text}');
-                                    } else {
-                                      showSnackbar(context,
-                                          'To use auto-fill, you must enter the abbreviated name from your receipt');
-                                    }
-                                  }),
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _itemNameController,
-                            validator: _validateNames,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              labelText: 'Item full name',
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          RichText(
-                            text: TextSpan(
-                                text: 'Search this item on Google Images',
-                                style: const TextStyle(
-                                  color: Colors.blue,
-                                ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    if (_itemNameController.text.isNotEmpty) {
-                                      launchURL(
-                                          'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
-                                    } else {
-                                      showSnackbar(context,
-                                          'Item name must not be empty.');
-                                    }
-                                  }),
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _priceController,
-                            validator: validatePrice,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              labelText: 'Price',
-                            ),
-                          ),
-                        ])))),
-            actions: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: 80,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.grey[600],
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 120,
-                    child: TextButton(
-                      onPressed: () => showDeleteModal(context, 'item', () {
-                        db.deleteItem(data.id);
-                        recalculateTotal();
-                        refreshDB();
+          return Scaffold(
+              backgroundColor: Colors.transparent,
+              body: AlertDialog(
+                content: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Form(
+                        key: _formKey,
+                        child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            // height: 294,
+                            color: Colors.white,
+                            child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextFormField(
+                                    controller: _abbreviationController,
+                                    validator: _validateNames,
+                                    maxLength: MAX_ABBR_LENGTH,
+                                    // enabled: true,
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      labelText: 'Abbreviated receipt name',
+                                      counterText: '',
+                                      counterStyle: TextStyle(fontSize: 0),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  RichText(
+                                    text: TextSpan(
+                                        text: 'Auto-fill full item name',
+                                        style:
+                                            const TextStyle(color: Colors.blue),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            if (_abbreviationController
+                                                .text.isNotEmpty) {
+                                              // Show the loading dialog
+                                              showLoading(context);
 
-                        // pop the delete modal and the edit dialog
-                        int count = 0;
-                        Navigator.of(context).popUntil((_) => count++ >= 2);
-                      }),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red[600],
+                                              String name = await expandName(
+                                                  context,
+                                                  _abbreviationController.text);
+                                              setState(() {
+                                                if (name.isNotEmpty) {
+                                                  _itemNameController.text =
+                                                      name;
+                                                }
+                                              });
+
+                                              // pop the loading dialog
+                                              Navigator.of(context).pop();
+                                            } else {
+                                              showSnackbar(context,
+                                                  'To use auto-fill, you must enter the abbreviated name from your receipt');
+                                            }
+                                          }),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: _itemNameController,
+                                    validator: _validateNames,
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      labelText: 'Item full name',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  RichText(
+                                    text: TextSpan(
+                                        text:
+                                            'Search this item on Google Images',
+                                        style: const TextStyle(
+                                          color: Colors.blue,
+                                        ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () {
+                                            if (_itemNameController
+                                                .text.isNotEmpty) {
+                                              launchURL(
+                                                  'http://images.google.com/images?um=1&hl=en&safe=active&nfpr=1&q=${_itemNameController.text}');
+                                            } else {
+                                              showSnackbar(context,
+                                                  'Item name must not be empty.');
+                                            }
+                                          }),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: _priceController,
+                                    validator: validatePrice,
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      labelText: 'Price',
+                                    ),
+                                  ),
+                                ])))),
+                actions: [
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.grey[600],
+                          ),
+                          child: const Text('Cancel'),
+                        ),
                       ),
-                      child: const Text('Delete'),
-                    ),
-                  ),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          await db.updateItem(Item(
-                              id: data.id,
-                              name: _itemNameController.text,
-                              abbreviation: _abbreviationController.text,
-                              price: double.parse(_priceController.text),
-                              receipt_id: data.receipt_id));
-                          recalculateTotal();
-                          refreshDB();
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColor.primary,
+                      SizedBox(
+                        width: 120,
+                        child: TextButton(
+                          onPressed: () => showDeleteModal(context, 'item', () {
+                            db.deleteItem(data.id);
+                            recalculateTotal();
+                            refreshDB();
+
+                            // pop the delete modal and the edit dialog
+                            int count = 0;
+                            Navigator.of(context).popUntil((_) => count++ >= 2);
+                          }),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red[600],
+                          ),
+                          child: const Text('Delete'),
+                        ),
                       ),
-                      child: const Text('Edit'),
-                    ),
-                  ),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (_formKey.currentState!.validate()) {
+                              await db.updateItem(Item(
+                                  id: data.id,
+                                  name: _itemNameController.text,
+                                  abbreviation: _abbreviationController.text,
+                                  price: double.parse(_priceController.text),
+                                  receipt_id: data.receipt_id));
+                              recalculateTotal();
+                              refreshDB();
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColor.primary,
+                          ),
+                          child: const Text('Edit'),
+                        ),
+                      ),
+                    ],
+                  )
                 ],
-              )
-            ],
-          );
+              ));
         });
   }
 
