@@ -119,6 +119,50 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     ));
   }
 
+  // Delete a receipt/item
+  showDeleteModal(context, String deletable, deleteFunction) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Delete $deletable'),
+            content: Container(
+                width: MediaQuery.of(context).size.width,
+                color: Colors.white,
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Text('Are you sure you want to delete this $deletable?')
+                ])),
+            actions: [
+              Row(
+                children: [
+                  SizedBox(
+                    width: 120,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey[600],
+                      ),
+                      child: const Text('CANCEL'),
+                    ),
+                  ),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: deleteFunction,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.primary,
+                      ),
+                      child: const Text('DELETE'),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          );
+        });
+  }
+
   // Rename the receipt
   showRenameDialog(context) {
     String originalName = _titleController.text;
@@ -179,57 +223,6 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                         backgroundColor: AppColor.primary,
                       ),
                       child: const Text('Rename'),
-                    ),
-                  ),
-                ],
-              )
-            ],
-          );
-        });
-  }
-
-  // Delete the receipt
-  showDeleteDialog(context) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Delete receipt'),
-            content: Container(
-                width: MediaQuery.of(context).size.width,
-                height: 64,
-                color: Colors.white,
-                child: Column(children: const [
-                  Text('Are you sure you want to delete this receipt?'),
-                ])),
-            actions: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: 120,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.grey[600],
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        File photo = File(widget.data.photo);
-                        photo.delete();
-                        db.deleteReceipt(widget.data.id);
-                        Navigator.popUntil(context,
-                            (Route<dynamic> predicate) => predicate.isFirst);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColor.primary,
-                      ),
-                      child: const Text('Delete'),
                     ),
                   ),
                 ],
@@ -470,12 +463,15 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                   SizedBox(
                     width: 120,
                     child: TextButton(
-                      onPressed: () {
+                      onPressed: () => showDeleteModal(context, 'item', () {
                         db.deleteItem(data.id);
                         recalculateTotal();
                         refreshDB();
-                        Navigator.of(context).pop();
-                      },
+
+                        // pop the delete modal and the edit dialog
+                        int count = 0;
+                        Navigator.of(context).popUntil((_) => count++ >= 2);
+                      }),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.red[600],
                       ),
@@ -537,9 +533,13 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
             ),
             actions: [
               IconButton(
-                  onPressed: () {
-                    showDeleteDialog(context);
-                  },
+                  onPressed: () => showDeleteModal(context, 'receipt', () {
+                        File photo = File(widget.data.photo);
+                        photo.delete();
+                        db.deleteReceipt(widget.data.id);
+                        Navigator.popUntil(context,
+                            (Route<dynamic> predicate) => predicate.isFirst);
+                      }),
                   icon: const Icon(Icons.delete, color: Colors.white)),
             ],
             systemOverlayStyle: SystemUiOverlayStyle.light,
