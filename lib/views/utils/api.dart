@@ -37,13 +37,22 @@ class Response {
   }
 }
 
-Future<Response> expandItemName(String abbreviation) async {
+Future<Response> expandItemNameAPI(String abbreviation, bool isFast) async {
   bool hasInternet = await checkInternetStatus();
   if (!hasInternet) return const Response(data: [], success: false);
 
-  final response = await http
-      .get(Uri.parse('http://$API_URL/expand/KNN?item=$abbreviation'))
-      .timeout(
+  Uri uri;
+
+  // Fast -> using LSTM (faster but no suggestions)
+  if (isFast) {
+    uri = Uri.parse('http://$API_URL/expand/LSTM?item=$abbreviation');
+  }
+  // not fast -> using KNN (slower but has suggestions (and sometimes more accurate))
+  else {
+    uri = Uri.parse('http://$API_URL/expand/KNN?item=$abbreviation');
+  }
+
+  final response = await http.get(uri).timeout(
     const Duration(seconds: 60),
     onTimeout: () {
       return http.Response('Error', 408);

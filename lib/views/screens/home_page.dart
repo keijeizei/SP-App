@@ -2,7 +2,6 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sp_app/models/core/receipt.dart';
-import 'package:sp_app/models/helper/receipt_helper.dart';
 import 'package:sp_app/views/screens/receipt_detail_page.dart';
 import 'package:sp_app/views/screens/search_page.dart';
 import 'package:sp_app/views/utils/AppColor.dart';
@@ -19,8 +18,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // List<Receipt> bookmarkedReceipt = ReceiptHelper.bookmarkedReceipt;
-
   DBHelper db = DBHelper();
 
   late Future<List<Receipt>> savedReceipt;

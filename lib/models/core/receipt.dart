@@ -22,7 +22,7 @@ class Receipt {
     );
   }
 
-  // TODO: id is not included here, check if it is needed
+  // id is not included because this is used in insert DB calls (id is assigned by the DB)
   Map<String, dynamic> toMap() {
     return {'title': title, 'photo': photo, 'date': date, 'price': price};
   }
@@ -66,7 +66,41 @@ class Item {
             name: e['name'],
             abbreviation: e['abbreviation'],
             price: e['price'],
-            receipt_id: e.receipt_id))
+            receipt_id: e['receipt_id']))
+        .toList();
+  }
+}
+
+class Suggestion {
+  int id;
+  int receipt_id;
+  int item_id;
+  String word;
+
+  Suggestion(
+      {required this.id,
+      required this.receipt_id,
+      required this.item_id,
+      required this.word});
+
+  factory Suggestion.fromJson(Map<String, Object> json) => Suggestion(
+        id: int.parse(json['id'].toString()),
+        receipt_id: int.parse(json['receipt_id'].toString()),
+        item_id: int.parse(json['item_id'].toString()),
+        word: json['word'].toString(),
+      );
+
+  Map<String, Object> toMap() {
+    return {'receipt_id': receipt_id, 'item_id': item_id, 'word': word};
+  }
+
+  static List<Suggestion> toList(List<Map<String, Object>> json) {
+    return List.from(json)
+        .map((e) => Suggestion(
+            id: e['id'],
+            receipt_id: e['receipt_id'],
+            item_id: e['item_id'],
+            word: e['word']))
         .toList();
   }
 }

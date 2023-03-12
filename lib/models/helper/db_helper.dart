@@ -21,6 +21,9 @@ class DBHelper {
         await db.execute(
           'CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, abbreviation TEXT, price REAL, receipt_id INTEGER, FOREIGN KEY(receipt_id) REFERENCES receipts(id))',
         );
+        await db.execute(
+          'CREATE TABLE suggestions(id INTEGER PRIMARY KEY AUTOINCREMENT, receipt_id INTEGER, item_id INTEGER, word TEXT, FOREIGN KEY(receipt_id) REFERENCES receipts(id), FOREIGN KEY(item_id) REFERENCES items(id))',
+        );
       },
       // Set the version. This executes the onCreate function and provides a
       // path to perform database upgrades and downgrades.
@@ -30,12 +33,14 @@ class DBHelper {
     return database;
   }
 
-  // Define a function that inserts tasks into the database
+  // ========================================= CREATE ========================================
+
+  // Define a function that inserts receipt into the database
   Future<int> insertReceipt(Receipt receipt) async {
     // Get a reference to the database.
     final db = await initializeDB();
 
-    // Insert the Task into the correct table. You might also specify the
+    // Insert the Receipt into the correct table. You might also specify the
     // `conflictAlgorithm` to use in case the same task is inserted twice.
     //
     // In this case, replace any previous data.
@@ -46,15 +51,10 @@ class DBHelper {
     );
   }
 
-  // Define a function that inserts tasks into the database
+  // Define a function that inserts item into the database
   Future<void> insertItem(Item item) async {
-    // Get a reference to the database.
     final db = await initializeDB();
 
-    // Insert the Task into the correct table. You might also specify the
-    // `conflictAlgorithm` to use in case the same task is inserted twice.
-    //
-    // In this case, replace any previous data.
     await db.insert(
       'items',
       item.toMap(),
@@ -62,9 +62,21 @@ class DBHelper {
     );
   }
 
+  // Define a function that inserts suggestion into the database
+  Future<void> insertSuggestion(Suggestion suggestion) async {
+    final db = await initializeDB();
+
+    await db.insert(
+      'suggestions',
+      suggestion.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  // ========================================= READ ========================================
+
   // A method that retrieves all the tasks from the tasks table.
   Future<List<Receipt>> getReceipts() async {
-    // Get a reference to the database.
     final db = await initializeDB();
 
     // Query the table for all The Tasks.
@@ -126,6 +138,28 @@ class DBHelper {
     });
   }
 
+  // A method that retrieves all the suggestions belonging to an item id
+  Future<List<Suggestion>> getSuggestions(int item_id) async {
+    final db = await initializeDB();
+
+    final List<Map<String, dynamic>> maps = await db.query(
+      'suggestions',
+      where: 'item_id = ?',
+      whereArgs: [item_id],
+    );
+
+    // Convert the List<Map<String, dynamic> into a List<Suggestion>.
+    return List.generate(maps.length, (i) {
+      return Suggestion(
+          id: maps[i]['id'],
+          receipt_id: maps[i]['receipt_id'],
+          item_id: maps[i]['item_id'],
+          word: maps[i]['word']);
+    });
+  }
+
+  // ========================================= UPDATE ========================================
+
   // Update a receipt
   Future<void> updateReceipt(Receipt receipt) async {
     final db = await initializeDB();
@@ -150,6 +184,8 @@ class DBHelper {
     );
   }
 
+  // ========================================= DELETE ========================================
+
   // A method that deletes a receipt given an id.
   Future<void> deleteReceipt(int id) async {
     final db = await initializeDB();
@@ -169,6 +205,17 @@ class DBHelper {
       'items',
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  // A method that deletes all suggestions for a given item_id.
+  Future<void> deleteSuggestionsByItem(int item_id) async {
+    final db = await initializeDB();
+
+    await db.delete(
+      'suggestions',
+      where: 'item_id = ?',
+      whereArgs: [item_id],
     );
   }
 }

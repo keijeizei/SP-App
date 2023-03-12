@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sp_app/models/core/receipt.dart';
@@ -41,6 +43,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
       TextEditingController(); // for adding new items only
   late final TextEditingController _priceController = TextEditingController();
 
+  late List<List<String>> suggestionsTable;
+
   final _formKey = GlobalKey<FormState>();
 
   Color appBarColor = Colors.transparent;
@@ -48,6 +52,11 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
   late Future<List<Item>> itemList;
   late double _totalPrice;
   int _itemCount = 0;
+
+  int cursorWordPosition = 0;
+
+  bool shouldFetchSuggestionsFromDB =
+      true; // tells if suggestions should be fetched from db or from suggestions table variable
 
   DBHelper db = DBHelper();
 
@@ -73,6 +82,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     }
   }
 
+  // ==================================================== DATABASE RELATED ===================================================
+
   void refreshDB() async {
     if (mounted) {
       setState(() {
@@ -96,6 +107,243 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
       _totalPrice = totalPrice;
       _itemCount = presentItemList.length;
     });
+  }
+
+  // fetch the suggestions table given an item id (used in edit item dialog when showing the suggestions)
+  Future<List<List<String>>> fetchSuggestionsTable(int item_id) async {
+    if (shouldFetchSuggestionsFromDB) {
+      List<Suggestion> suggestions = await db.getSuggestions(item_id);
+
+      List<dynamic> decodedSuggestionsTable = jsonDecode(
+          suggestions[0].word); // suggestion is the first result in the db
+
+      suggestionsTable = rotateSuggestions(decodedSuggestionsTable);
+    }
+
+    return suggestionsTable;
+  }
+
+  // ==================================================== EXPANSION RELATED ===================================================
+
+  // Expands an abbr using LSTM and KNN. This function is for the 'auto-fill' button
+  Future<String> expandName(context, String abbreviation) async {
+    Response response = await expandItemNameAPI(abbreviation, true);
+
+    if (!response.success) {
+      showSnackbar(context,
+          'Abbreviation decoding failed. Please check your internet connection.');
+      return '';
+    }
+
+    String name = response.data[0];
+
+    response = await expandItemNameAPI(abbreviation, false);
+
+    if (!response.success) {
+      showSnackbar(context,
+          'Abbreviation decoding failed. Please check your internet connection.');
+      return '';
+    }
+
+    List<List<String>> table = rotateSuggestions(response.data);
+
+    suggestionsTable = table;
+
+    shouldFetchSuggestionsFromDB = false;
+
+    return name;
+  }
+
+  Future<void> expandItemLSTM(Item item) async {
+    Response response = await expandItemNameAPI(item.abbreviation, true);
+
+    if (response.success) {
+      String name = response.data[0];
+
+      await db.updateItem(Item(
+          id: item.id,
+          name: name,
+          abbreviation: item.abbreviation,
+          price: item.price,
+          receipt_id: widget.data.id));
+      refreshDB();
+    }
+  }
+
+  Future<void> expandItemKNN(Item item) async {
+    Response response = await expandItemNameAPI(item.abbreviation, false);
+
+    String jsonSuggestions = jsonEncode(response.data);
+
+    await db.deleteSuggestionsByItem(item.id);
+
+    db.insertSuggestion(Suggestion(
+        id: -1,
+        receipt_id: item.receipt_id,
+        item_id: item.id,
+        word: jsonSuggestions));
+
+    refreshDB();
+
+    // List<String> nameList = [];
+    // for (var j = 0; j < response.data.length; j++) {
+    //   nameList.add(response.data[j][0][1]);
+    // }
+
+    // String name = nameList.join(' ');
+
+    // db.updateItem(Item(
+    //     id: item.id,
+    //     name: name,
+    //     abbreviation: item.abbreviation,
+    //     price: item.price,
+    //     receipt_id: widget.data.id));
+    // refreshDB();
+  }
+
+  int currentStep = 0;
+  Timer? udpateNotificationAfter1Second;
+
+  // expand all items and shows a progress bar notification
+  Future<void> expandAllItems(int id) async {
+    List<Item> presentItemList = await db.getItems(widget.data.id);
+    // first loop is for LSTM, second loop is for KNN
+    int maxStep = presentItemList.length * 2;
+
+    // simulatedStep goes from 1 to itemlist * 2 + 1, currentStep goes from 1 to itemlist
+    for (var simulatedStep = 1; simulatedStep <= maxStep + 1; simulatedStep++) {
+      if (simulatedStep > presentItemList.length) {
+        currentStep = simulatedStep - presentItemList.length;
+      } else {
+        currentStep = simulatedStep;
+      }
+
+      String itemName;
+      if (simulatedStep <= maxStep) {
+        itemName = presentItemList[currentStep - 1].abbreviation;
+      } else {
+        itemName = '';
+      }
+
+      if (simulatedStep <= maxStep) {
+        if (simulatedStep <= maxStep / 2) {
+          await expandItemLSTM(presentItemList[currentStep - 1]);
+        } else {
+          await expandItemKNN(presentItemList[currentStep - 1]);
+        }
+      }
+
+      if (udpateNotificationAfter1Second != null) continue;
+
+      udpateNotificationAfter1Second = Timer(const Duration(seconds: 1), () {
+        _updateCurrentProgressBar(
+            id: id,
+            simulatedStep: simulatedStep,
+            maxStep: maxStep,
+            itemName: itemName);
+        udpateNotificationAfter1Second?.cancel();
+        udpateNotificationAfter1Second = null;
+      });
+    }
+  }
+
+  void _updateCurrentProgressBar(
+      {required int id,
+      required int simulatedStep,
+      required int maxStep,
+      required String itemName}) {
+    if (simulatedStep >= maxStep) {
+      AwesomeNotifications().createNotification(
+          content: NotificationContent(
+              id: id,
+              channelKey: 'basic_channel',
+              title: 'Receipt decoding finished',
+              body: 'All items in your receipt have been decoded.',
+              category: NotificationCategory.Progress,
+              locked: false));
+    } else {
+      int progress = min((simulatedStep / maxStep * 100).round(), 100);
+      AwesomeNotifications().createNotification(
+          content: NotificationContent(
+              id: id,
+              channelKey: 'basic_channel',
+              title: progress <= 50
+                  ? 'Decoding your receipt... ($simulatedStep/$maxStep)'
+                  : 'Generating name suggestions... ($simulatedStep/$maxStep)',
+              body: itemName,
+              category: NotificationCategory.Progress,
+              notificationLayout: NotificationLayout.ProgressBar,
+              progress: progress,
+              locked: true));
+    }
+  }
+
+  // ==================================================== TYPE-AHEAD RELATED ===================================================
+
+  Widget typeAheadItemBuilder(context, suggestion) {
+    // determine which word the cursor is positioned
+    cursorWordPosition = 0;
+    for (var i = 0; i < _itemNameController.selection.baseOffset; i++) {
+      if (_itemNameController.text[i] == ' ') {
+        cursorWordPosition++;
+      }
+    }
+
+    if (cursorWordPosition < suggestion.length) {
+      return ListTile(title: Text(suggestion[cursorWordPosition]));
+    }
+    return const SizedBox();
+  }
+
+  void onSuggestionSelected(suggestion) {
+    String startWords = '';
+    String endWords = '';
+    String buffer = '';
+
+    // collect the words before the word where the cursor is
+    for (var i = 0; i < _itemNameController.selection.baseOffset; i++) {
+      if (_itemNameController.text[i] == ' ') {
+        startWords = '$startWords$buffer';
+        buffer = ' ';
+      } else {
+        buffer += _itemNameController.text[i];
+      }
+    }
+    if (startWords.isNotEmpty) {
+      startWords += ' ';
+    }
+
+    // collect the words after the word where the cursor is
+    buffer = '';
+    bool bufferStart = false;
+    for (var i = _itemNameController.selection.baseOffset;
+        i < _itemNameController.text.length;
+        i++) {
+      if (!bufferStart && _itemNameController.text[i] == ' ') {
+        bufferStart = true;
+      } else if (bufferStart && _itemNameController.text[i] != ' ') {
+        buffer += _itemNameController.text[i];
+      } else if (bufferStart && _itemNameController.text[i] == ' ') {
+        endWords = '$endWords$buffer';
+        buffer = ' ';
+      }
+    }
+    if (buffer != ' ') {
+      endWords += buffer;
+    }
+
+    _itemNameController.text =
+        '$startWords${suggestion[cursorWordPosition]} $endWords';
+  }
+
+  // ==================================================== UI RELATED ===================================================
+
+  String? _validateNames(String? value) {
+    if (_itemNameController.text.isEmpty &&
+        _abbreviationController.text.isEmpty) {
+      return 'Either full name or abbreviated name required';
+    }
+    return null;
   }
 
   showLoading(context) {
@@ -125,114 +373,6 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
         );
       },
     );
-  }
-
-  Future<String> expandName(context, String abbreviation) async {
-    Response response = await expandItemName(abbreviation);
-
-    if (!response.success) {
-      showSnackbar(context,
-          'Abbreviation decoding failed. Please check your internet connection.');
-      return '';
-    }
-
-    List<String> nameList = [];
-    for (var j = 0; j < response.data.length; j++) {
-      nameList.add(response.data[j][0][1]);
-    }
-
-    return nameList.join(' ');
-  }
-
-  Future<void> expandItem(Item item) async {
-    Response response = await expandItemName(item.abbreviation);
-
-    List<String> nameList = [];
-    for (var j = 0; j < response.data.length; j++) {
-      nameList.add(response.data[j][0][1]);
-    }
-
-    String name = nameList.join(' ');
-
-    db.updateItem(Item(
-        id: item.id,
-        name: name,
-        abbreviation: item.abbreviation,
-        price: item.price,
-        receipt_id: widget.data.id));
-    refreshDB();
-  }
-
-  int currentStep = 0;
-  Timer? udpateNotificationAfter1Second;
-
-  // expand all items and shows a progress bar notification
-  Future<void> expandAllItems(int id) async {
-    List<Item> presentItemList = await db.getItems(widget.data.id);
-    int maxStep = presentItemList.length;
-
-    for (var simulatedStep = 1; simulatedStep <= maxStep + 1; simulatedStep++) {
-      currentStep = simulatedStep;
-      if (udpateNotificationAfter1Second != null) continue;
-
-      String itemName;
-      if (simulatedStep <= maxStep) {
-        itemName = presentItemList[currentStep - 1].abbreviation;
-      } else {
-        itemName = '';
-      }
-
-      udpateNotificationAfter1Second = Timer(const Duration(seconds: 1), () {
-        _updateCurrentProgressBar(
-            id: id,
-            simulatedStep: currentStep,
-            maxStep: maxStep,
-            itemName: itemName);
-        udpateNotificationAfter1Second?.cancel();
-        udpateNotificationAfter1Second = null;
-      });
-
-      if (simulatedStep <= maxStep) {
-        await expandItem(presentItemList[currentStep - 1]);
-      }
-    }
-  }
-
-  void _updateCurrentProgressBar(
-      {required int id,
-      required int simulatedStep,
-      required int maxStep,
-      required String itemName}) {
-    if (simulatedStep > maxStep) {
-      AwesomeNotifications().createNotification(
-          content: NotificationContent(
-              id: id,
-              channelKey: 'basic_channel',
-              title: 'Receipt decoding finished',
-              body: 'All items in your receipt have been decoded.',
-              category: NotificationCategory.Progress,
-              locked: false));
-    } else {
-      int progress = min((simulatedStep / maxStep * 100).round(), 100);
-      AwesomeNotifications().createNotification(
-          content: NotificationContent(
-              id: id,
-              channelKey: 'basic_channel',
-              title: 'Decoding your receipt... ($simulatedStep/$maxStep)',
-              body: itemName,
-              category: NotificationCategory.Progress,
-              notificationLayout: NotificationLayout.ProgressBar,
-              progress: progress,
-              locked: true));
-    }
-  }
-
-  String? _validateNames(String? value) {
-    if (_itemNameController.text.isEmpty &&
-        _abbreviationController.text.isEmpty) {
-      return 'Either full name or abbreviated name required';
-    }
-    return null;
   }
 
   changeAppBarColor(ScrollController scrollController) {
@@ -288,7 +428,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                           Navigator.of(context).pop();
                         },
                         style: TextButton.styleFrom(
-                          foregroundColor: Colors.grey[600],
+                          foregroundColor: AppColor.primary,
                         ),
                         child: const Text("DON'T SHOW AGAIN"),
                       ),
@@ -297,7 +437,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                           Navigator.of(context).pop();
                         },
                         style: TextButton.styleFrom(
-                          foregroundColor: Colors.grey[600],
+                          foregroundColor: AppColor.primary,
                         ),
                         child: const Text('OK'),
                       ),
@@ -332,7 +472,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                         Navigator.of(context).pop();
                       },
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.grey[600],
+                        foregroundColor: AppColor.primary,
                       ),
                       child: const Text('CANCEL'),
                     ),
@@ -389,7 +529,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                         Navigator.of(context).pop();
                       },
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.grey[600],
+                        foregroundColor: AppColor.primary,
                       ),
                       child: const Text('Cancel'),
                     ),
@@ -488,13 +628,25 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                           }),
                                   ),
                                   const SizedBox(height: 16),
-                                  TextFormField(
-                                    controller: _itemNameController,
-                                    validator: _validateNames,
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(),
-                                      labelText: 'Item full name',
+                                  TypeAheadFormField(
+                                    textFieldConfiguration:
+                                        TextFieldConfiguration(
+                                      controller: _itemNameController,
+                                      decoration: const InputDecoration(
+                                        border: OutlineInputBorder(),
+                                        labelText: 'Item full name',
+                                      ),
                                     ),
+                                    suggestionsCallback: (pattern) {
+                                      return suggestionsTable;
+                                    },
+                                    itemBuilder: typeAheadItemBuilder,
+                                    transitionBuilder:
+                                        (context, suggestionsBox, controller) {
+                                      return suggestionsBox;
+                                    },
+                                    onSuggestionSelected: onSuggestionSelected,
+                                    validator: _validateNames,
                                   ),
                                   const SizedBox(height: 4),
                                   RichText(
@@ -536,7 +688,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                             Navigator.of(context).pop();
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: Colors.grey[600],
+                            foregroundColor: AppColor.primary,
                           ),
                           child: const Text('Cancel'),
                         ),
@@ -570,6 +722,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
   }
 
   showEditDialog(context, data) {
+    shouldFetchSuggestionsFromDB = true;
+
     if (data != null) {
       _abbreviationController.text = data.abbreviation;
       _itemNameController.text = data.name;
@@ -636,13 +790,26 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                           }),
                                   ),
                                   const SizedBox(height: 16),
-                                  TextFormField(
-                                    controller: _itemNameController,
-                                    validator: _validateNames,
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(),
-                                      labelText: 'Item full name',
+                                  TypeAheadFormField(
+                                    textFieldConfiguration:
+                                        TextFieldConfiguration(
+                                      controller: _itemNameController,
+                                      decoration: const InputDecoration(
+                                        border: OutlineInputBorder(),
+                                        labelText: 'Item full name',
+                                      ),
                                     ),
+                                    suggestionsCallback: (pattern) async {
+                                      return await fetchSuggestionsTable(
+                                          data.id);
+                                    },
+                                    itemBuilder: typeAheadItemBuilder,
+                                    transitionBuilder:
+                                        (context, suggestionsBox, controller) {
+                                      return suggestionsBox;
+                                    },
+                                    onSuggestionSelected: onSuggestionSelected,
+                                    validator: _validateNames,
                                   ),
                                   const SizedBox(height: 4),
                                   RichText(
@@ -684,7 +851,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                             Navigator.of(context).pop();
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: Colors.grey[600],
+                            foregroundColor: AppColor.primary,
                           ),
                           child: const Text('Cancel'),
                         ),
