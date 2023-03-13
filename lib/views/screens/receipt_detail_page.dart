@@ -82,6 +82,16 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     }
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _titleController.dispose();
+    _itemNameController.dispose();
+    _abbreviationController.dispose();
+    _priceController.dispose();
+    super.dispose();
+  }
+
   // ==================================================== DATABASE RELATED ===================================================
 
   void refreshDB() async {
