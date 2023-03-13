@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:url_launcher/url_launcher.dart';
 
 bool isNumeric(String str) {
@@ -42,4 +44,19 @@ List<List<String>> rotateSuggestions(List<dynamic> suggestions) {
     table.add(row);
   }
   return table;
+}
+
+String convertSuggestionsForDB(List<List<String>> suggestions) {
+  // rotate a suggestionsTable (suggestion: i, word: j) to a KNN response.data (word: i: suggestion: j)
+  List<List<String>> table = [];
+  for (int i = 0; i < 5; i++) {
+    List<String> row = [];
+    for (int j = 0; j < suggestions.length; j++) {
+      if (suggestions[j].length > i) {
+        row.add(suggestions[j][i]);
+      }
+    }
+    table.add(row);
+  }
+  return jsonEncode(table);
 }

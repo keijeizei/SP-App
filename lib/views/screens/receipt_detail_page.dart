@@ -878,6 +878,15 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                         child: ElevatedButton(
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
+                              db.deleteSuggestionsByItem(data.id);
+
+                              db.insertSuggestion(Suggestion(
+                                  id: -1,
+                                  receipt_id: data.receipt_id,
+                                  item_id: data.id,
+                                  word: convertSuggestionsForDB(
+                                      suggestionsTable)));
+
                               await db.updateItem(Item(
                                   id: data.id,
                                   name: _itemNameController.text,
