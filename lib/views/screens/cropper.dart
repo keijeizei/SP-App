@@ -64,22 +64,24 @@ class _CropperScreenState extends State<CropperScreen> {
       pathFrom: CVPathFrom.GALLERY_CAMERA,
       pathString: file.path,
       maxValue: 255,
-      adaptiveMethod: Cv2.ADAPTIVE_THRESH_MEAN_C,
+      adaptiveMethod: Cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
       thresholdType: Cv2.THRESH_BINARY,
       blockSize: 11,
       constantValue: 12,
     );
 
-    // save threshold image in temp folder=
+    // save threshold image in temp folder
     final tempDir = await getTemporaryDirectory();
-    File thresholdFile = await File('${tempDir.path}/image.png').create();
+    String thresholdLocation =
+        '${tempDir.path}/image_${DateTime.now().millisecondsSinceEpoch}.png';
+    File thresholdFile = await File(thresholdLocation).create();
     thresholdFile.writeAsBytesSync(byteImage);
 
     // create new entry in receipt DB
     Receipt receiptData = Receipt(
         id: -1,
         title: 'New Receipt',
-        photo: widget.imagePath,
+        photo: thresholdLocation,
         date: DateTime.now().millisecondsSinceEpoch,
         price: 0);
 

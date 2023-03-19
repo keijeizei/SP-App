@@ -123,13 +123,22 @@ class _CameraScreenState extends State<CameraScreen> {
               Positioned(
                   top: MediaQuery.of(context).size.height / 2,
                   child: Text(
-                      'Capture as close to the receipt as possible.\nMake sure the item list with prices can be seen.',
+                      'Capture as close to the receipt as possible.\nKeep the text parallel to the lines.\nMake sure the item list with prices can be seen.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          color: AppColor.secondary.withOpacity(0.8),
+                          color: Colors.white.withOpacity(0.8),
                           fontSize: 14,
                           fontWeight: FontWeight.w200,
                           fontFamily: 'inter'))),
+              Positioned.fill(
+                  child: Transform.scale(
+                      scale: 1.15,
+                      child: const Image(
+                        image: AssetImage(
+                          "assets/images/overlay.png",
+                        ),
+                        repeat: ImageRepeat.repeat,
+                      ))),
               Positioned(
                   bottom: 100,
                   left: MediaQuery.of(context).size.width / 2 - 50,
