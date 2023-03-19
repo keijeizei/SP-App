@@ -9,10 +9,13 @@ import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_crop/image_crop.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sp_app/models/core/receipt.dart';
 import 'package:sp_app/models/helper/db_helper.dart';
 import 'package:sp_app/views/screens/full_screen_image.dart';
 import 'package:sp_app/views/screens/receipt_detail_page.dart';
+import 'package:opencv_4/factory/pathfrom.dart';
+import 'package:opencv_4/opencv_4.dart';
 
 import '../utils/AppColor.dart';
 import '../utils/misc_utils.dart';
@@ -32,6 +35,9 @@ class _CropperScreenState extends State<CropperScreen> {
 
   DBHelper db = DBHelper();
 
+  /// File imageFile -> the image from the camera
+  /// File file -> the cropped image
+  /// File thresholdFile -> the cropped image with OpenCV threshold applied
   Future<void> cropImage(context) async {
     // final scale = cropKey.currentState.scale;
     final area = cropKey.currentState?.area ?? const Rect.fromLTRB(0, 0, 0, 0);
@@ -47,12 +53,27 @@ class _CropperScreenState extends State<CropperScreen> {
     //   preferredSize: (2000 / scale).round(),
     // );
 
+    // crop image
     final file = await ImageCrop.cropImage(
       file: widget.imageFile,
       area: area,
     );
 
-    debugPrint('$file');
+    // perform thresholding using opencv
+    Uint8List byteImage = await Cv2.adaptiveThreshold(
+      pathFrom: CVPathFrom.GALLERY_CAMERA,
+      pathString: file.path,
+      maxValue: 255,
+      adaptiveMethod: Cv2.ADAPTIVE_THRESH_MEAN_C,
+      thresholdType: Cv2.THRESH_BINARY,
+      blockSize: 11,
+      constantValue: 12,
+    );
+
+    // save threshold image in temp folder=
+    final tempDir = await getTemporaryDirectory();
+    File thresholdFile = await File('${tempDir.path}/image.png').create();
+    thresholdFile.writeAsBytesSync(byteImage);
 
     // create new entry in receipt DB
     Receipt receiptData = Receipt(
@@ -66,7 +87,8 @@ class _CropperScreenState extends State<CropperScreen> {
     receiptData.id = trueId;
 
     // parse the text from the image
-    List<String> receiptList = await processImage(InputImage.fromFile(file));
+    List<String> receiptList =
+        await processImage(InputImage.fromFile(thresholdFile));
 
     List<String> itemList = [];
     List<double> priceList = [];
@@ -79,6 +101,8 @@ class _CropperScreenState extends State<CropperScreen> {
         itemList.add(receiptList[i]);
       }
     }
+
+    // TODO
 
     // insert itemList priceList pairs
     for (var i = 0; i < itemList.length; i++) {
@@ -185,7 +209,7 @@ class _CropperScreenState extends State<CropperScreen> {
                           vertical: 8, horizontal: 4),
                       child: OutlinedButton(
                         onPressed: () {
-                          cropImage(context);
+                          Navigator.of(context).pop();
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
