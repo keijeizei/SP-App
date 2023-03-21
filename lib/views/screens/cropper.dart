@@ -16,6 +16,7 @@ import 'package:sp_app/views/screens/full_screen_image.dart';
 import 'package:sp_app/views/screens/receipt_detail_page.dart';
 import 'package:opencv_4/factory/pathfrom.dart';
 import 'package:opencv_4/opencv_4.dart';
+import 'package:diacritic/diacritic.dart';
 
 import '../utils/AppColor.dart';
 import '../utils/misc_utils.dart';
@@ -81,7 +82,7 @@ class _CropperScreenState extends State<CropperScreen> {
     Receipt receiptData = Receipt(
         id: -1,
         title: 'New Receipt',
-        photo: thresholdLocation,
+        photo: widget.imagePath,
         date: DateTime.now().millisecondsSinceEpoch,
         price: 0);
 
@@ -100,11 +101,18 @@ class _CropperScreenState extends State<CropperScreen> {
       if (isNumeric(receiptList[i])) {
         priceList.add(double.parse(receiptList[i]));
       } else {
-        itemList.add(receiptList[i]);
+        // treat numbers with comma separator as prices and replace , with .
+        if (RegExp(r"^[0-9]+,[0-9]+$").hasMatch(receiptList[i])) {
+          priceList.add(double.parse(receiptList[i].replaceAll(',', '.')));
+        }
+
+        // skip quantity
+        if (RegExp(r".* @ .*").hasMatch(receiptList[i]) ||
+            RegExp(r".*[0-9].* X .*[0-9].*").hasMatch(receiptList[i])) continue;
+
+        itemList.add(removeDiacritics(receiptList[i]));
       }
     }
-
-    // TODO
 
     // insert itemList priceList pairs
     for (var i = 0; i < itemList.length; i++) {
