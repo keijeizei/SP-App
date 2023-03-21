@@ -78,7 +78,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
       WidgetsBinding.instance
           .addPostFrameCallback((_) => showDecodingModal(this.context));
 
-      expandAllItems(1);
+      expandAllItems(this.context);
     }
   }
 
@@ -164,24 +164,36 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     return name;
   }
 
-  Future<void> expandItemLSTM(Item item) async {
+  Future<bool> expandItemLSTM(Item item, context) async {
     Response response = await expandItemNameAPI(item.abbreviation, true);
 
-    if (response.success) {
-      String name = response.data[0];
-
-      await db.updateItem(Item(
-          id: item.id,
-          name: name,
-          abbreviation: item.abbreviation,
-          price: item.price,
-          receipt_id: widget.data.id));
-      refreshDB();
+    if (!response.success) {
+      showSnackbar(context,
+          'Abbreviation decoding failed. Please check your internet connection.');
+      return false;
     }
+
+    String name = response.data[0];
+
+    await db.updateItem(Item(
+        id: item.id,
+        name: name,
+        abbreviation: item.abbreviation,
+        price: item.price,
+        receipt_id: widget.data.id));
+    refreshDB();
+
+    return true;
   }
 
-  Future<void> expandItemKNN(Item item) async {
+  Future<bool> expandItemKNN(Item item, context) async {
     Response response = await expandItemNameAPI(item.abbreviation, false);
+
+    if (!response.success) {
+      showSnackbar(context,
+          'Abbreviation decoding failed. Please check your internet connection.');
+      return false;
+    }
 
     String jsonSuggestions = jsonEncode(response.data);
 
@@ -194,6 +206,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
         word: jsonSuggestions));
 
     refreshDB();
+
+    return true;
 
     // List<String> nameList = [];
     // for (var j = 0; j < response.data.length; j++) {
@@ -215,7 +229,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
   Timer? udpateNotificationAfter1Second;
 
   // expand all items and shows a progress bar notification
-  Future<void> expandAllItems(int id) async {
+  Future<void> expandAllItems(context) async {
+    int id = 1;
     List<Item> presentItemList = await db.getItems(widget.data.id);
     // first loop is for LSTM, second loop is for KNN
     int maxStep = presentItemList.length * 2;
@@ -235,12 +250,27 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
         itemName = '';
       }
 
+      bool success = false;
       if (simulatedStep <= maxStep) {
         if (simulatedStep <= maxStep / 2) {
-          await expandItemLSTM(presentItemList[currentStep - 1]);
+          success =
+              await expandItemLSTM(presentItemList[currentStep - 1], context);
         } else {
-          await expandItemKNN(presentItemList[currentStep - 1]);
+          success =
+              await expandItemKNN(presentItemList[currentStep - 1], context);
         }
+      }
+
+      if (!success) {
+        AwesomeNotifications().createNotification(
+            content: NotificationContent(
+                id: id,
+                channelKey: 'basic_channel',
+                title: 'Receipt decoding failed',
+                body: 'Please check your internet connection.',
+                category: NotificationCategory.Progress,
+                locked: false));
+        return;
       }
 
       if (udpateNotificationAfter1Second != null) continue;
