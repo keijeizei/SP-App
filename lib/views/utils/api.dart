@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 const API_URL = '10.0.2.2:5000';
+// const API_URL = 'tan-sp-69363.up.railway.app/';
 
 Future<bool> checkInternetStatus() async {
   try {

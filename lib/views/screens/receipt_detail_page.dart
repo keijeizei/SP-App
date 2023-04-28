@@ -195,6 +195,20 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
       return false;
     }
 
+    String name = '';
+    List<dynamic> result = response.data;
+
+    for (var i = 0; i < result.length; i++) {
+      name += result[i][0] + ' ';
+    }
+
+    await db.updateItem(Item(
+        id: item.id,
+        name: name,
+        abbreviation: item.abbreviation,
+        price: item.price,
+        receipt_id: widget.data.id));
+
     String jsonSuggestions = jsonEncode(response.data);
 
     await db.deleteSuggestionsByItem(item.id);
