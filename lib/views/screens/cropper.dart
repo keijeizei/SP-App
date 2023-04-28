@@ -198,7 +198,7 @@ class _CropperScreenState extends State<CropperScreen> {
                         'Crop the image to only\ninclude the item list and their prices.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            color: AppColor.secondary,
+                            color: AppColor.whiteSoft,
                             fontSize: 14,
                             fontWeight: FontWeight.w200,
                             fontFamily: 'inter')))
@@ -227,7 +227,7 @@ class _CropperScreenState extends State<CropperScreen> {
                         ),
                         child: Text('Cancel',
                             style: TextStyle(
-                                color: AppColor.secondary,
+                                color: AppColor.whiteSoft,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'inter')),
@@ -249,7 +249,7 @@ class _CropperScreenState extends State<CropperScreen> {
                           ),
                           child: Text('Crop',
                               style: TextStyle(
-                                  color: AppColor.secondary,
+                                  color: AppColor.whiteSoft,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   fontFamily: 'inter')),
