@@ -16,7 +16,7 @@ class _SearchPageState extends State<SearchPage> {
   TextEditingController searchInputController = TextEditingController();
   late Future<List<Receipt>> searchResult;
 
-  int sortMode = 0; // newest, oldest, cheapest, msot expensive
+  int sortMode = 0; // newest, oldest, cheapest, most expensive
 
   DBHelper db = DBHelper();
 
@@ -30,16 +30,16 @@ class _SearchPageState extends State<SearchPage> {
   void updateSortMode(int mode) async {
     List<Receipt> presentSearchResult = await searchResult;
     if (mode == 0) {
-      presentSearchResult.sort((a, b) => a.date.compareTo(b.date));
+      presentSearchResult.sort((a, b) => b.date.compareTo(a.date));
     }
     if (mode == 1) {
-      presentSearchResult = List.from(presentSearchResult.reversed);
+      presentSearchResult.sort((a, b) => a.date.compareTo(b.date));
     }
     if (mode == 2) {
       presentSearchResult.sort((a, b) => a.price.compareTo(b.price));
     }
     if (mode == 3) {
-      presentSearchResult = List.from(presentSearchResult.reversed);
+      presentSearchResult.sort((a, b) => b.price.compareTo(a.price));
     }
     setState(() {
       searchResult = Future.value(presentSearchResult);

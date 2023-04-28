@@ -31,6 +31,7 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
               GestureDetector(
                 onTap: () {
                   Navigator.of(context).pop();
+                  widget.updateSortMode(0);
                 },
                 child: Container(
                   height: 60,
@@ -120,7 +121,7 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                 textColor: Colors.grey,
                 child: ListTile(
                   selected: widget.sortMode == 2,
-                  title: const Text('Cheapest first',
+                  title: const Text('Least expensive first',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   contentPadding:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -133,7 +134,7 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                 border: Border(bottom: BorderSide(color: Colors.grey))),
             child: GestureDetector(
                 onTap: () {
-                  widget.updateSortMode(1);
+                  widget.updateSortMode(3);
                   Navigator.of(context).pop();
                 },
                 child: ListTileTheme(
