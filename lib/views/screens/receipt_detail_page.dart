@@ -174,13 +174,16 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
     String name = response.data[0];
 
-    await db.updateItem(Item(
-        id: item.id,
-        name: name,
-        abbreviation: item.abbreviation,
-        price: item.price,
-        receipt_id: widget.data.id));
-    refreshDB();
+    // name will be empty if LSTM is not confident enough, in that case, do not update the name
+    if (name != '') {
+      await db.updateItem(Item(
+          id: item.id,
+          name: name,
+          abbreviation: item.abbreviation,
+          price: item.price,
+          receipt_id: widget.data.id));
+      refreshDB();
+    }
 
     return true;
   }
@@ -245,16 +248,12 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
   Future<void> expandAllItems(context) async {
     int id = 1;
     List<Item> presentItemList = await db.getItems(widget.data.id);
-    // first loop is for LSTM, second loop is for KNN
+    // KNN and LSTM runs alternately
     int maxStep = presentItemList.length * 2;
 
     // simulatedStep goes from 1 to itemlist * 2 + 1, currentStep goes from 1 to itemlist
     for (var simulatedStep = 1; simulatedStep <= maxStep + 1; simulatedStep++) {
-      if (simulatedStep > presentItemList.length) {
-        currentStep = simulatedStep - presentItemList.length;
-      } else {
-        currentStep = simulatedStep;
-      }
+      currentStep = (simulatedStep + 1) ~/ 2;
 
       String itemName;
       if (simulatedStep <= maxStep) {
@@ -265,7 +264,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
       bool success = false;
       if (simulatedStep <= maxStep) {
-        if (simulatedStep <= maxStep / 2) {
+        if (simulatedStep % 2 == 0) {
           success =
               await expandItemLSTM(presentItemList[currentStep - 1], context);
         } else {
@@ -293,6 +292,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
             id: id,
             simulatedStep: simulatedStep,
             maxStep: maxStep,
+            length: presentItemList.length,
             itemName: itemName);
         udpateNotificationAfter1Second?.cancel();
         udpateNotificationAfter1Second = null;
@@ -304,6 +304,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
       {required int id,
       required int simulatedStep,
       required int maxStep,
+      required int length,
       required String itemName}) {
     if (simulatedStep >= maxStep) {
       AwesomeNotifications().createNotification(
@@ -320,9 +321,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
           content: NotificationContent(
               id: id,
               channelKey: 'basic_channel',
-              title: progress <= 50
-                  ? 'Decoding your receipt... ($simulatedStep/$maxStep)'
-                  : 'Generating name suggestions... ($simulatedStep/$maxStep)',
+              title: 'Decoding your receipt... ($currentStep/$length)',
               body: itemName,
               category: NotificationCategory.Progress,
               notificationLayout: NotificationLayout.ProgressBar,
