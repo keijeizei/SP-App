@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sp_app/models/core/receipt.dart';
+import 'package:amethyst/models/core/receipt.dart';
 
 class ItemTile extends StatelessWidget {
   final Item data;

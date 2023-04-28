@@ -1,4 +1,4 @@
-package com.example.sp_app
+package com.example.amethyst
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "sp_app" "\0"
+            VALUE "FileDescription", "amethyst" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "sp_app" "\0"
+            VALUE "InternalName", "amethyst" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2023 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "sp_app.exe" "\0"
-            VALUE "ProductName", "sp_app" "\0"
+            VALUE "OriginalFilename", "amethyst.exe" "\0"
+            VALUE "ProductName", "amethyst" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

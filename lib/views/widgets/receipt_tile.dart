@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:sp_app/models/core/receipt.dart';
-import 'package:sp_app/views/screens/receipt_detail_page.dart';
-import 'package:sp_app/views/utils/AppColor.dart';
-import 'package:sp_app/views/utils/datetime_converter.dart';
+import 'package:amethyst/models/core/receipt.dart';
+import 'package:amethyst/views/screens/receipt_detail_page.dart';
+import 'package:amethyst/views/utils/AppColor.dart';
+import 'package:amethyst/views/utils/datetime_converter.dart';
 
 class ReceiptTile extends StatelessWidget {
   final Receipt data;

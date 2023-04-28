@@ -3,7 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:sp_app/views/screens/cropper.dart';
+import 'package:amethyst/views/screens/cropper.dart';
 
 import '../../main.dart';
 import '../utils/AppColor.dart';

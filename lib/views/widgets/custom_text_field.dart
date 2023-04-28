@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sp_app/views/utils/AppColor.dart';
+import 'package:amethyst/views/utils/AppColor.dart';
 
 class CustomTextField extends StatelessWidget {
   final String title;

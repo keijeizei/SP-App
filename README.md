@@ -1,4 +1,4 @@
-# sp_app
+# Amethyst
 
 A new Flutter project.
 

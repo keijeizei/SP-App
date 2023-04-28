@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:sp_app/views/utils/AppColor.dart';
+import 'package:amethyst/views/utils/AppColor.dart';
 
 import '../screens/search_page.dart';
 

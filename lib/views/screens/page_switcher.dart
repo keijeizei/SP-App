@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sp_app/views/screens/home_page.dart';
-import 'package:sp_app/views/utils/AppColor.dart';
-import 'package:sp_app/views/widgets/custom_bottom_navigation_bar.dart';
+import 'package:amethyst/views/screens/home_page.dart';
+import 'package:amethyst/views/utils/AppColor.dart';
+import 'package:amethyst/views/widgets/custom_bottom_navigation_bar.dart';
 
-import 'package:sp_app/views/screens/camera.dart';
+import 'package:amethyst/views/screens/camera.dart';
 
 class PageSwitcher extends StatefulWidget {
   @override
