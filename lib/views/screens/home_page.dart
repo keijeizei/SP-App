@@ -44,8 +44,11 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: const Text('SP',
-            style: TextStyle(fontFamily: 'inter', fontWeight: FontWeight.w700)),
+        title: const Text('Amethyst',
+            style: TextStyle(
+                fontFamily: 'rochaline',
+                fontWeight: FontWeight.w700,
+                fontSize: 24)),
       ),
       body: ListView(
         shrinkWrap: true,

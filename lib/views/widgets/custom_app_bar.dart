@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sp_app/views/utils/AppColor.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -12,10 +13,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      brightness: Brightness.dark,
       backgroundColor: AppColor.primary,
+      leading: const Padding(
+          padding: EdgeInsets.all(12),
+          child: Image(
+              image: AssetImage(
+            "assets/logo_white.png",
+          ))),
       title: title,
-      elevation: 0,
+      elevation: 0, systemOverlayStyle: SystemUiOverlayStyle.light,
       // actions: [
       //   Visibility(
       //     visible: showProfilePhoto,
