@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
-const API_URL = '10.0.2.2:5000';
+const API_URL = kReleaseMode ? 'tan-sp-69363.up.railway.app/' : '10.0.2.2:5000';
+// const API_URL = '10.0.2.2:5000';
 // const API_URL = 'tan-sp-69363.up.railway.app/';
 
 Future<bool> checkInternetStatus() async {
