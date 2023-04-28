@@ -6,7 +6,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:amethyst/views/screens/cropper.dart';
 
 import '../../main.dart';
-import '../utils/AppColor.dart';
 
 class CameraScreen extends StatefulWidget {
   @override

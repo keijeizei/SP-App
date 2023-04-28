@@ -1,14 +1,10 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 import 'package:amethyst/models/core/receipt.dart';
-import 'package:amethyst/views/screens/receipt_detail_page.dart';
-import 'package:amethyst/views/screens/search_page.dart';
 import 'package:amethyst/views/utils/AppColor.dart';
 import 'package:amethyst/views/widgets/custom_app_bar.dart';
 import 'package:amethyst/views/widgets/dummy_search_bar.dart';
 import 'package:amethyst/views/widgets/receipt_tile.dart';
-import 'package:sqflite/sqflite.dart';
 
 import '../../models/helper/db_helper.dart';
 

@@ -4,15 +4,11 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_crop/image_crop.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:amethyst/models/core/receipt.dart';
 import 'package:amethyst/models/helper/db_helper.dart';
-import 'package:amethyst/views/screens/full_screen_image.dart';
 import 'package:amethyst/views/screens/receipt_detail_page.dart';
 import 'package:opencv_4/factory/pathfrom.dart';
 import 'package:opencv_4/opencv_4.dart';
