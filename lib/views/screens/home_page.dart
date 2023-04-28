@@ -18,6 +18,8 @@ class _HomePageState extends State<HomePage> {
 
   late Future<List<Receipt>> savedReceipt;
 
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -27,6 +29,11 @@ class _HomePageState extends State<HomePage> {
       if (!isAllowed) {
         AwesomeNotifications().requestPermissionToSendNotifications();
       }
+    });
+
+    // disable bouncing scroll for the top
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels < 0) _scrollController.jumpTo(0);
     });
   }
 
@@ -48,6 +55,7 @@ class _HomePageState extends State<HomePage> {
       ),
       body: ListView(
         shrinkWrap: true,
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         children: [
           // Section 1 - Featured Receipt - Wrapper
