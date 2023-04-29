@@ -30,7 +30,7 @@ class ReceiptDetailPage extends StatefulWidget {
 
 class _ReceiptDetailPageState extends State<ReceiptDetailPage>
     with TickerProviderStateMixin {
-  int MAX_ABBR_LENGTH = 50;
+  int MAX_ABBR_LENGTH = 38;
 
   late ScrollController _scrollController;
 
@@ -42,7 +42,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
       TextEditingController(); // for adding new items only
   late final TextEditingController _priceController = TextEditingController();
 
-  late List<List<String>> suggestionsTable;
+  List<List<String>> suggestionsTable = [[]];
 
   final _formKey = GlobalKey<FormState>();
 
@@ -136,17 +136,8 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
   // Expands an abbr using LSTM and KNN. This function is for the 'auto-fill' button
   Future<String> expandName(context, String abbreviation) async {
-    Response response = await expandItemNameAPI(abbreviation, true);
-
-    if (!response.success) {
-      showSnackbar(context,
-          'Abbreviation decoding failed. Please check your internet connection.');
-      return '';
-    }
-
-    String name = response.data[0];
-
-    response = await expandItemNameAPI(abbreviation, false);
+    // KNN
+    Response response = await expandItemNameAPI(abbreviation, false);
 
     if (!response.success) {
       showSnackbar(context,
@@ -158,7 +149,28 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
 
     suggestionsTable = table;
 
+    String name = '';
+    List<dynamic> result = response.data;
+
+    for (var i = 0; i < result.length; i++) {
+      name += result[i][0] + ' ';
+    }
+
     shouldFetchSuggestionsFromDB = false;
+
+    // LSTM
+    response = await expandItemNameAPI(abbreviation, true);
+
+    if (!response.success) {
+      showSnackbar(context,
+          'Abbreviation decoding failed. Please check your internet connection.');
+      return '';
+    }
+
+    // use LSTM only if LSTM model is confident (output is not '')
+    if (response.data[0] != '') {
+      name = response.data[0];
+    }
 
     return name;
   }
