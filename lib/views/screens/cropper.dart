@@ -94,12 +94,23 @@ class _CropperScreenState extends State<CropperScreen> {
 
     // divide receiptList to itemList and priceList
     for (var i = 0; i < receiptList.length; i++) {
-      if (isNumeric(receiptList[i])) {
+      // don't include numbers longer than 9 (they are unlikely to be prices and are just barcode)
+      if (isNumeric(receiptList[i]) && receiptList[i].length < 9) {
         priceList.add(double.parse(receiptList[i]));
       } else {
         // treat numbers with comma separator as prices and replace , with .
         if (RegExp(r"^[0-9]+,[0-9]+$").hasMatch(receiptList[i])) {
           priceList.add(double.parse(receiptList[i].replaceAll(',', '.')));
+        }
+
+        // ROBINSONS: Remove ' V' at the end of the price
+        if (RegExp(r"^[0-9]+.[0-9]+ V$").hasMatch(receiptList[i])) {
+          priceList.add(double.parse(receiptList[i].replaceAll(' V', '')));
+        }
+
+        // 7-ELEVEN: Remove 'V' at the end of the price
+        if (RegExp(r"^[0-9]+.[0-9]+V$").hasMatch(receiptList[i])) {
+          priceList.add(double.parse(receiptList[i].replaceAll('V', '')));
         }
 
         // skip quantity
