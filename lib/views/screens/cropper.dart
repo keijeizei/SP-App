@@ -88,6 +88,7 @@ class _CropperScreenState extends State<CropperScreen> {
     // parse the text from the image
     List<String> receiptList =
         await processImage(InputImage.fromFile(thresholdFile));
+    // List<String> receiptList = await processImage(InputImage.fromFile(file));
 
     List<String> itemList = [];
     List<double> priceList = [];
