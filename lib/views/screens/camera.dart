@@ -36,6 +36,7 @@ class _CameraScreenState extends State<CameraScreen> {
       cameraDescription,
       ResolutionPreset.high,
       imageFormatGroup: ImageFormatGroup.jpeg,
+      enableAudio: false,
     );
 
     // Dispose the previous controller
@@ -102,25 +103,26 @@ class _CameraScreenState extends State<CameraScreen> {
     return Scaffold(
       body: _isCameraInitialized
           ? Stack(alignment: Alignment.center, children: [
-              AspectRatio(
-                  aspectRatio: 1 / controller!.value.aspectRatio,
-                  child: Transform.scale(
-                    scale: 1.15,
-                    alignment: Alignment.topCenter,
-                    child: CameraPreview(
-                      controller!,
-                      child: LayoutBuilder(builder:
-                          (BuildContext context, BoxConstraints constraints) {
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTapDown: (details) =>
-                              onViewFinderTap(details, constraints),
-                        );
-                      }),
-                    ),
+              SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                        width: 100, // the actual width is not important here
+                        child: CameraPreview(controller!, child: LayoutBuilder(
+                            builder: (BuildContext context,
+                                BoxConstraints constraints) {
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTapDown: (details) =>
+                                onViewFinderTap(details, constraints),
+                          );
+                        }))),
                   )),
               Positioned(
                   top: MediaQuery.of(context).size.height / 2,
+                  left: MediaQuery.of(context).size.width / 2 - 154,
                   child: Text(
                       'Capture as close to the receipt as possible.\nKeep the text parallel to the lines.\nMake sure the item list with prices can be seen.',
                       textAlign: TextAlign.center,

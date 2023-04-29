@@ -1,7 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.amethyst">
    <application
-        android:label="amethyst"
+        android:label="Amethyst"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
@@ -43,4 +44,6 @@
     </queries>
     <!-- Required to fetch data from the internet. -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove"/>
 </manifest>
