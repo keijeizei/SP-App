@@ -21,15 +21,12 @@ Future<void> main() async {
     print('Error in fetching the cameras: $e');
   }
 
-  AwesomeNotifications().initialize(
-      'resource://mipmap/launcher_icon',
-      [
-        NotificationChannel(
-            channelKey: 'basic_channel',
-            channelName: 'Basic notifications',
-            channelDescription: 'Basic channel notification')
-      ],
-      debug: true);
+  AwesomeNotifications().initialize('resource://mipmap/launcher_icon', [
+    NotificationChannel(
+        channelKey: 'basic_channel',
+        channelName: 'Basic notifications',
+        channelDescription: 'Basic channel notification')
+  ]);
 
   SharedPreferences.setMockInitialValues({});
 
