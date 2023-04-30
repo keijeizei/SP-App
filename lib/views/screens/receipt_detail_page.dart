@@ -1108,7 +1108,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                 ),
                 // Receipt Title
                 Container(
-                  margin: const EdgeInsets.only(bottom: 0, top: 8),
+                  margin: const EdgeInsets.only(bottom: 0, top: 2),
                   child: Row(children: [
                     Flexible(
                         child: Text(
@@ -1118,7 +1118,7 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                       softWrap: false,
                       style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'inter'),
                     )),
