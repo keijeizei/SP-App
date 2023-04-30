@@ -1210,8 +1210,16 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                             showEditDialog(context, data);
                           },
                           child: ItemTile(
-                            data: data,
-                          ));
+                              data: data,
+                              onEdit: () => showEditDialog(context, data),
+                              onDelete: () =>
+                                  showDeleteModal(context, 'item', () {
+                                    db.deleteItem(data.id);
+                                    recalculateTotal();
+                                    refreshDB();
+
+                                    Navigator.of(context).pop();
+                                  })));
                     },
                   );
                 }
