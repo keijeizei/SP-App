@@ -86,9 +86,9 @@ class _CropperScreenState extends State<CropperScreen> {
     receiptData.id = trueId;
 
     // parse the text from the image
-    List<String> receiptList =
-        await processImage(InputImage.fromFile(thresholdFile));
-    // List<String> receiptList = await processImage(InputImage.fromFile(file));
+    // List<String> receiptList =
+    //     await processImage(InputImage.fromFile(thresholdFile));
+    List<String> receiptList = await processImage(InputImage.fromFile(file));
 
     List<String> itemList = [];
     List<double> priceList = [];
@@ -108,15 +108,23 @@ class _CropperScreenState extends State<CropperScreen> {
         if (RegExp(r"^[0-9]+.[0-9]+ V$").hasMatch(receiptList[i])) {
           priceList.add(double.parse(receiptList[i].replaceAll(' V', '')));
         }
+        if (RegExp(r"^[0-9]+.[0-9]+ v$").hasMatch(receiptList[i])) {
+          priceList.add(double.parse(receiptList[i].replaceAll(' v', '')));
+        }
 
         // 7-ELEVEN: Remove 'V' at the end of the price
         if (RegExp(r"^[0-9]+.[0-9]+V$").hasMatch(receiptList[i])) {
           priceList.add(double.parse(receiptList[i].replaceAll('V', '')));
         }
+        if (RegExp(r"^[0-9]+.[0-9]+v$").hasMatch(receiptList[i])) {
+          priceList.add(double.parse(receiptList[i].replaceAll('v', '')));
+        }
 
         // skip quantity
-        if (RegExp(r".* @ .*").hasMatch(receiptList[i]) ||
-            RegExp(r".*[0-9].* X .*[0-9].*").hasMatch(receiptList[i])) continue;
+        if (RegExp(r"^[0-9].*\s*@\s*.*[0-9].*").hasMatch(receiptList[i]) ||
+            RegExp(r"^[0-9].*\s*(X|x)\s*.*[0-9].*").hasMatch(receiptList[i])) {
+          continue;
+        }
 
         itemList.add(removeDiacritics(receiptList[i]));
       }
