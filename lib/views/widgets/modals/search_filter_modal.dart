@@ -79,7 +79,7 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                 textColor: Colors.grey,
                 child: ListTile(
                   selected: widget.sortMode == 0,
-                  title: const Text('Newest first',
+                  title: const Text('A-Z',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   contentPadding:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -100,10 +100,10 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                 textColor: Colors.grey,
                 child: ListTile(
                   selected: widget.sortMode == 1,
-                  title: const Text('Oldest first',
+                  title: const Text('Z-A',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   contentPadding:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                      const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
                 ),
               )),
         ),
@@ -121,6 +121,48 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                 textColor: Colors.grey,
                 child: ListTile(
                   selected: widget.sortMode == 2,
+                  title: const Text('Newest first',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                ),
+              )),
+        ),
+        // Sort By Option
+        Container(
+          decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey))),
+          child: GestureDetector(
+              onTap: () {
+                widget.updateSortMode(3);
+                Navigator.of(context).pop();
+              },
+              child: ListTileTheme(
+                selectedColor: AppColor.primary,
+                textColor: Colors.grey,
+                child: ListTile(
+                  selected: widget.sortMode == 3,
+                  title: const Text('Oldest first',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                ),
+              )),
+        ),
+        // Sort By Option
+        Container(
+          decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey))),
+          child: GestureDetector(
+              onTap: () {
+                widget.updateSortMode(4);
+                Navigator.of(context).pop();
+              },
+              child: ListTileTheme(
+                selectedColor: AppColor.primary,
+                textColor: Colors.grey,
+                child: ListTile(
+                  selected: widget.sortMode == 4,
                   title: const Text('Least expensive first',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   contentPadding:
@@ -134,14 +176,14 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                 border: Border(bottom: BorderSide(color: Colors.grey))),
             child: GestureDetector(
                 onTap: () {
-                  widget.updateSortMode(3);
+                  widget.updateSortMode(5);
                   Navigator.of(context).pop();
                 },
                 child: ListTileTheme(
                   selectedColor: AppColor.primary,
                   textColor: Colors.grey,
                   child: ListTile(
-                    selected: widget.sortMode == 3,
+                    selected: widget.sortMode == 5,
                     title: const Text('Most expensive first',
                         style: TextStyle(fontWeight: FontWeight.w600)),
                     contentPadding:

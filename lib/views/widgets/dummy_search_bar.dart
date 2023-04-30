@@ -23,7 +23,7 @@ class DummySearchBar extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 50,
-                margin: EdgeInsets.only(right: 15),
+                // margin: EdgeInsets.only(right: 15),
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
@@ -44,16 +44,16 @@ class DummySearchBar extends StatelessWidget {
               ),
             ),
             // Right side - filter button
-            Container(
-              width: 50,
-              height: 50,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: AppColor.secondary,
-              ),
-              child: SvgPicture.asset('assets/icons/filter.svg'),
-            )
+            // Container(
+            //   width: 50,
+            //   height: 50,
+            //   alignment: Alignment.center,
+            //   decoration: BoxDecoration(
+            //     borderRadius: BorderRadius.circular(10),
+            //     color: AppColor.secondary,
+            //   ),
+            //   child: SvgPicture.asset('assets/icons/filter.svg'),
+            // )
           ],
         ),
       ),

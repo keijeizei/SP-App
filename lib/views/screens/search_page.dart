@@ -30,15 +30,21 @@ class _SearchPageState extends State<SearchPage> {
   void updateSortMode(int mode) async {
     List<Receipt> presentSearchResult = await searchResult;
     if (mode == 0) {
-      presentSearchResult.sort((a, b) => b.date.compareTo(a.date));
+      presentSearchResult.sort((a, b) => b.title.compareTo(a.title));
     }
     if (mode == 1) {
-      presentSearchResult.sort((a, b) => a.date.compareTo(b.date));
+      presentSearchResult.sort((a, b) => a.title.compareTo(b.title));
     }
     if (mode == 2) {
-      presentSearchResult.sort((a, b) => a.price.compareTo(b.price));
+      presentSearchResult.sort((a, b) => b.date.compareTo(a.date));
     }
     if (mode == 3) {
+      presentSearchResult.sort((a, b) => a.date.compareTo(b.date));
+    }
+    if (mode == 4) {
+      presentSearchResult.sort((a, b) => a.price.compareTo(b.price));
+    }
+    if (mode == 5) {
       presentSearchResult.sort((a, b) => b.price.compareTo(a.price));
     }
     setState(() {
@@ -147,6 +153,7 @@ class _SearchPageState extends State<SearchPage> {
                       GestureDetector(
                         onTap: () {
                           showModalBottomSheet(
+                              isScrollControlled: true,
                               context: context,
                               backgroundColor: Colors.white,
                               shape: const RoundedRectangleBorder(
