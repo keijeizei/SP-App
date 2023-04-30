@@ -95,8 +95,11 @@ class _CropperScreenState extends State<CropperScreen> {
 
     // divide receiptList to itemList and priceList
     for (var i = 0; i < receiptList.length; i++) {
-      // don't include numbers longer than 9 (they are unlikely to be prices and are just barcode)
-      if (isNumeric(receiptList[i]) && receiptList[i].length < 9) {
+      // don't include numbers longer than 9 (they are unlikely to be prices and are just barcodes)
+      if (isNumeric(receiptList[i]) && receiptList[i].length > 9) continue;
+
+      // parse numbers as price or fix its formatting
+      if (isNumeric(receiptList[i])) {
         priceList.add(double.parse(receiptList[i]));
       } else {
         // treat numbers with comma separator as prices and replace , with .
@@ -120,12 +123,18 @@ class _CropperScreenState extends State<CropperScreen> {
           priceList.add(double.parse(receiptList[i].replaceAll('v', '')));
         }
 
-        // skip quantity
-        if (RegExp(r"^[0-9].*\s*@\s*.*[0-9].*").hasMatch(receiptList[i]) ||
-            RegExp(r"^[0-9].*\s*(X|x)\s*.*[0-9].*").hasMatch(receiptList[i])) {
-          continue;
+        // skip quantity detail
+        // must be less than 15 chars and is in the format 9 @ 9 or 9 X 9
+        // long names might actually be item names in the format 9 LongItemName @ 9
+        if (receiptList[i].length < 15) {
+          if (RegExp(r"^[0-9].*\s*@\s*.*[0-9].*").hasMatch(receiptList[i]) ||
+              RegExp(r"^[0-9].*\s*(X|x)\s*.*[0-9].*")
+                  .hasMatch(receiptList[i])) {
+            continue;
+          }
         }
 
+        // add as an item if it is not a price
         itemList.add(removeDiacritics(receiptList[i]));
       }
     }
