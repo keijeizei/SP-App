@@ -30,10 +30,12 @@ class _SearchPageState extends State<SearchPage> {
   void updateSortMode(int mode) async {
     List<Receipt> presentSearchResult = await searchResult;
     if (mode == 0) {
-      presentSearchResult.sort((a, b) => b.title.compareTo(a.title));
+      presentSearchResult.sort(
+          (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
     }
     if (mode == 1) {
-      presentSearchResult.sort((a, b) => a.title.compareTo(b.title));
+      presentSearchResult.sort(
+          (a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
     }
     if (mode == 2) {
       presentSearchResult.sort((a, b) => b.date.compareTo(a.date));
