@@ -736,6 +736,9 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                   TextFormField(
                                     controller: _priceController,
                                     validator: validatePrice,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(),
                                       labelText: 'Price',
@@ -899,6 +902,9 @@ class _ReceiptDetailPageState extends State<ReceiptDetailPage>
                                   TextFormField(
                                     controller: _priceController,
                                     validator: validatePrice,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(),
                                       labelText: 'Price',
